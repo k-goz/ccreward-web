@@ -1,8 +1,10 @@
 import logging
+import os
+import subprocess
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -91,6 +93,52 @@ async def service_worker():
     if sw.exists():
         return FileResponse(sw, media_type="application/javascript", headers={"Cache-Control": "no-cache"})
     return {"error": "not found"}
+
+
+DEPLOY_SECRET = os.getenv("DEPLOY_SECRET", "ccreward-deploy-2026")
+PROJECT_DIR = Path("/opt/ccreward/backend")
+NGINX_DIR = Path("/var/www/ccreward")
+
+
+@app.post("/api/deploy-webhook", tags=["系统"])
+async def deploy_webhook(x_deploy_secret: str = Header(..., alias="X-Deploy-Secret")):
+    """Webhook for GitHub Actions to trigger deployment."""
+    if x_deploy_secret != DEPLOY_SECRET:
+        raise HTTPException(status_code=403, detail="Invalid deploy secret")
+
+    if not PROJECT_DIR.exists():
+        raise HTTPException(status_code=500, detail=f"Project dir not found: {PROJECT_DIR}")
+
+    logs = []
+
+    def run(cmd: str) -> str:
+        try:
+            result = subprocess.run(cmd, shell=True, cwd=str(PROJECT_DIR),
+                                    capture_output=True, text=True, timeout=60)
+            out = result.stdout.strip() + result.stderr.strip()
+            logs.append(f"[OK] {cmd}\n{out}" if result.returncode == 0 else f"[FAIL] {cmd}\n{out}")
+            return out
+        except Exception as e:
+            logs.append(f"[ERR] {cmd}\n{str(e)}")
+            return str(e)
+
+    # git pull
+    run("git pull origin main")
+
+    # sync frontend to nginx
+    web_dir = PROJECT_DIR / "app" / "web"
+    if web_dir.exists():
+        run(f"cp {web_dir}/index.html {NGINX_DIR}/index.html")
+        run(f"cp {web_dir}/app.min.js {NGINX_DIR}/app.min.js")
+        run(f"cp {web_dir}/style.min.css {NGINX_DIR}/style.min.css")
+        run(f"cp {web_dir}/manifest.json {NGINX_DIR}/manifest.json 2>/dev/null || true")
+        run(f"cp {web_dir}/sw.js {NGINX_DIR}/sw.js 2>/dev/null || true")
+        run(f"cp -r {web_dir}/assets/* {NGINX_DIR}/assets/ 2>/dev/null || true")
+
+    # restart supervisor
+    run("supervisorctl restart ccreward")
+
+    return {"status": "ok", "logs": logs}
 
 
 @app.get("/api/health", tags=["系统"])
