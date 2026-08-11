@@ -1,0 +1,28 @@
+name: Deploy to Server
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /opt/ccreward/backend
+            git pull origin main
+            # 同步前端文件到 nginx 双路径
+            cp app/web/index.html /var/www/ccreward/index.html
+            cp app/web/app.min.js /var/www/ccreward/app.min.js
+            cp app/web/style.min.css /var/www/ccreward/style.min.css
+            cp app/web/manifest.json /var/www/ccreward/manifest.json 2>/dev/null || true
+            cp app/web/sw.js /var/www/ccreward/sw.js 2>/dev/null || true
+            cp -r app/web/assets/* /var/www/ccreward/assets/ 2>/dev/null || true
+            supervisorctl restart ccreward
+            echo "Deploy complete"
