@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>ccreward.cn — 信用卡权益 & 多平台比价</title>
+<style>
+:root {
+  --primary: #1677ff;
+  --primary-light: #e6f4ff;
+  --success: #52c41a;
+  --warning: #faad14;
+  --danger: #ff4d4f;
+  --text: #1f1f1f;
+  --text-secondary: #666;
+  --border: #f0f0f0;
+  --bg: #f7f8fa;
+  --card-bg: #fff;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; background:var(--bg); color:var(--text); line-height:1.6; }
+.header { background:linear-gradient(135deg,#1677ff,#0958d9); color:#fff; padding:16px 20px; position:sticky; top:0; z-index:100; box-shadow:0 2px 12px rgba(22,119,255,0.25); display:flex; align-items:center; justify-content:space-between; }
+.header-brand { font-size:18px; font-weight:700; display:flex; align-items:center; gap:8px; }
+.header-brand .logo { font-size:24px; }
+.header-stats { display:flex; gap:16px; font-size:12px; opacity:0.85; }
+.tabs { display:flex; gap:4px; margin:16px auto 0; max-width:800px; background:rgba(255,255,255,0.2); border-radius:10px; padding:4px; }
+.tab { flex:1; padding:8px 12px; text-align:center; border-radius:8px; cursor:pointer; font-size:13px; font-weight:500; color:rgba(255,255,255,0.7); transition:all .2s; display:flex; align-items:center; justify-content:center; gap:4px; }
+.tab.active { background:#fff; color:var(--primary); }
+.container { max-width:800px; margin:0 auto; padding:16px; }
+.card { background:var(--card-bg); border-radius:var(--radius); padding:16px; margin-bottom:12px; box-shadow:var(--shadow); }
+.card-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px; }
+.card-title { font-size:16px; font-weight:600; }
+.card-meta { font-size:12px; color:var(--text-secondary); }
+.tag { display:inline-block; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:500; }
+.tag-blue { background:var(--primary-light); color:var(--primary); }
+.tag-green { background:#f6ffed; color:var(--success); }
+.tag-orange { background:#fff7e6; color:var(--warning); }
+.tag-red { background:#fff1f0; color:var(--danger); }
+.stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:16px; }
+.stat-card { background:var(--card-bg); border-radius:var(--radius); padding:16px; text-align:center; box-shadow:var(--shadow); }
+.stat-value { font-size:32px; font-weight:700; color:var(--primary); line-height:1.2; }
+.stat-label { font-size:12px; color:var(--text-secondary); margin-top:4px; }
+.search-box { display:flex; gap:8px; margin-bottom:12px; }
+.search-box input { flex:1; padding:12px 16px; border:2px solid var(--border); border-radius:var(--radius-sm); font-size:15px; outline:none; transition:border .2s; }
+.search-box input:focus { border-color:var(--primary); }
+.search-box button { padding:12px 24px; background:var(--primary); color:#fff; border:none; border-radius:var(--radius-sm); font-size:15px; font-weight:600; cursor:pointer; white-space:nowrap; }
+.search-box button:active { transform:scale(.98); }
+.quick-tags { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:16px; }
+.quick-tag { padding:5px 12px; background:var(--card-bg); border:1px solid var(--border); border-radius:16px; font-size:12px; color:var(--text-secondary); cursor:pointer; transition:all .15s; }
+.quick-tag:hover,.quick-tag:active { border-color:var(--primary); color:var(--primary); }
+.compare-summary { background:linear-gradient(135deg,#f6ffed,#d9f7be); border-radius:var(--radius); padding:20px; margin-bottom:16px; text-align:center; }
+.compare-summary .cheapest-label { font-size:13px; color:var(--text-secondary); }
+.compare-summary .cheapest-value { font-size:36px; font-weight:800; color:var(--success); margin:4px 0; }
+.compare-summary .cheapest-platform { font-size:15px; color:var(--primary); font-weight:600; }
+.activity-item { padding:14px; border:1px solid var(--border); border-radius:var(--radius-sm); margin-bottom:10px; background:var(--card-bg); }
+.activity-item.cheapest { border-color:var(--success); background:#f6ffed; }
+.activity-top { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:6px; }
+.activity-name { font-size:15px; font-weight:600; flex:1; }
+.activity-price-box { text-align:right; white-space:nowrap; }
+.price-now { font-size:22px; font-weight:700; color:var(--danger); }
+.price-old { font-size:12px; color:var(--text-secondary); text-decoration:line-through; margin-left:4px; }
+.activity-desc { font-size:13px; color:var(--text-secondary); margin-top:4px; }
+.activity-conds { font-size:11px; color:var(--text-secondary); margin-top:6px; background:var(--bg); padding:4px 8px; border-radius:4px; display:inline-block; }
+.activity-bottom { display:flex; justify-content:space-between; align-items:center; margin-top:10px; }
+.btn-deal { display:inline-flex; align-items:center; gap:4px; padding:8px 20px; border:none; border-radius:6px; font-size:14px; font-weight:700; cursor:pointer; text-decoration:none; transition:all .2s; color:#fff; background:var(--danger); }
+.btn-deal.cheapest-deal { background:var(--success); }
+.btn-deal:active { transform:scale(.96); }
+.deal-hint { font-size:11px; color:var(--text-secondary); margin-top:4px; }
+.bank-group { margin-bottom:20px; }
+.bank-label { font-size:14px; font-weight:700; color:var(--primary); margin-bottom:8px; padding-left:8px; border-left:3px solid var(--primary); }
+.card-pick { padding:12px 14px; border:1px solid var(--border); border-radius:var(--radius-sm); margin-bottom:6px; cursor:pointer; transition:all .15s; display:flex; justify-content:space-between; align-items:center; background:var(--card-bg); }
+.card-pick:hover,.card-pick:active { border-color:var(--primary); background:var(--primary-light); }
+.card-pick.selected { border-color:var(--primary); background:var(--primary-light); }
+.card-pick-name { font-size:14px; font-weight:500; }
+.card-pick-benefits { font-size:12px; color:var(--text-secondary); }
+.benefit-item { padding:12px; border:1px solid var(--border); border-radius:var(--radius-sm); margin-bottom:8px; background:var(--card-bg); }
+.benefit-item h4 { font-size:14px; font-weight:600; margin-bottom:4px; }
+.benefit-item p { font-size:13px; color:var(--text-secondary); }
+.benefit-tags { display:flex; gap:6px; margin-top:8px; flex-wrap:wrap; }
+/* card image with fallback gradient */
+.card-thumb { width:48px; height:32px; border-radius:4px; object-fit:cover; flex-shrink:0; }
+.card-thumb-fallback { width:48px; height:32px; border-radius:4px; flex-shrink:0; display:flex; align-items:center; justify-content:center; color:#fff; font-size:10px; font-weight:700; }
+.redemption-item { display:flex; justify-content:space-between; align-items:center; padding:10px; border:1px solid var(--border); border-radius:var(--radius-sm); margin-bottom:6px; background:var(--card-bg); }
+.redemption-info h4 { font-size:14px; font-weight:600; }
+.redemption-info p { font-size:12px; color:var(--text-secondary); }
+.redemption-right { text-align:right; }
+.redemption-points { font-size:16px; font-weight:700; color:var(--warning); }
+.redemption-value { font-size:12px; color:var(--text-secondary); }
+.empty { text-align:center; padding:32px 16px; color:var(--text-secondary); }
+.empty-icon { font-size:48px; margin-bottom:8px; }
+.loading { text-align:center; padding:20px; color:var(--text-secondary); }
+.section-label { font-size:12px; font-weight:600; color:var(--text-secondary); margin:20px 0 10px; text-transform:uppercase; letter-spacing:.5px; }
+.filter-row { display:flex; gap:6px; margin-bottom:12px; flex-wrap:wrap; }
+.filter-chip { padding:5px 14px; border:1px solid var(--border); border-radius:16px; font-size:12px; cursor:pointer; transition:all .15s; background:var(--card-bg); color:var(--text-secondary); display:flex; align-items:center; gap:4px; }
+.filter-chip:hover { border-color:var(--primary); color:var(--primary); }
+.filter-chip.active { background:var(--primary); color:#fff; border-color:var(--primary); }
+.filter-chip .badge { background:rgba(0,0,0,0.1); padding:1px 6px; border-radius:8px; font-size:11px; }
+.filter-chip.active .badge { background:rgba(255,255,255,0.25); }
+/* === 我的卡包 === */
+.wallet-card { background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:#fff; border-radius:var(--radius); padding:20px; margin-bottom:12px; position:relative; overflow:hidden; box-shadow:0 4px 16px rgba(102,126,234,0.3); }
+.wallet-card.inactive { background:linear-gradient(135deg,#aaa,#888); opacity:0.7; }
+.wallet-card-bank { font-size:12px; opacity:0.8; }
+.wallet-card-name { font-size:20px; font-weight:700; margin:4px 0 12px; }
+.wallet-card-last4 { font-size:18px; font-family:monospace; letter-spacing:3px; opacity:0.9; }
+.wallet-card-row { display:flex; justify-content:space-between; font-size:12px; opacity:0.85; margin-top:12px; }
+.wallet-card-actions { display:flex; gap:8px; margin-top:16px; }
+.wallet-btn { padding:6px 16px; border:1px solid rgba(255,255,255,0.4); border-radius:6px; font-size:12px; color:#fff; background:rgba(255,255,255,0.15); cursor:pointer; }
+.wallet-btn:hover,.wallet-btn:active { background:rgba(255,255,255,0.25); }
+.add-card-btn { width:100%; padding:16px; border:2px dashed var(--border); border-radius:var(--radius); background:transparent; font-size:15px; color:var(--text-secondary); cursor:pointer; transition:all .2s; margin-bottom:12px; }
+.add-card-btn:hover { border-color:var(--primary); color:var(--primary); background:var(--primary-light); }
+/* bill stats */
+.stat-card { background:var(--card-bg); border:1px solid var(--border); border-radius:8px; padding:12px; text-align:center; min-width:80px; flex:1; }
+.stat-num { font-size:22px; font-weight:700; }
+.stat-label { font-size:11px; color:var(--text-secondary); margin-top:2px; }
+/* modal */
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:200; display:flex; align-items:flex-end; justify-content:center; }
+.modal { background:#fff; border-radius:16px 16px 0 0; width:100%; max-width:800px; max-height:85vh; overflow-y:auto; padding:20px; animation:slideUp .25s ease; }
+@keyframes slideUp { from{transform:translateY(100%);} to{transform:translateY(0);} }
+.modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+.modal-title { font-size:18px; font-weight:700; }
+.modal-close { font-size:24px; cursor:pointer; color:var(--text-secondary); border:none; background:none; }
+.form-group { margin-bottom:14px; }
+.form-group label { display:block; font-size:13px; font-weight:500; margin-bottom:4px; color:var(--text); }
+.form-group input, .form-group select, .form-group textarea { width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:var(--radius-sm); font-size:15px; outline:none; }
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color:var(--primary); }
+.form-row { display:flex; gap:12px; }
+.form-row .form-group { flex:1; }
+.btn-primary { width:100%; padding:14px; background:var(--primary); color:#fff; border:none; border-radius:var(--radius-sm); font-size:16px; font-weight:600; cursor:pointer; margin-top:8px; }
+.btn-primary:active { transform:scale(.98); }
+.search-result-item { padding:12px; border:1px solid var(--border); border-radius:var(--radius-sm); margin-bottom:6px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; }
+.search-result-item:hover { border-color:var(--primary); background:var(--primary-light); }
+@media (max-width:500px) {
+  .header-stats { display:none; }
+  .stats-grid { grid-template-columns:repeat(2,1fr); }
+  .price-now { font-size:18px; }
+  .tab { font-size:12px; padding:8px 8px; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-brand"><span class="logo">💳</span> ccreward.cn</div>
+  <div class="header-stats"><span id="hdr-cards">📊 --</span><span id="hdr-banks">🏦 --</span><span id="hdr-activities">🎫 --</span></div>
+</div>
+
+<div class="tabs" style="flex-wrap:wrap;">
+  <div class="tab active" data-tab="wallet">👛 卡包</div>
+  <div class="tab" data-tab="recommend">🎯 推荐</div>
+  <div class="tab" data-tab="deals">🔍 比价</div>
+  <div class="tab" data-tab="cards">💳 权益</div>
+  <div class="tab" data-tab="compare">📊 对比</div>
+  <div class="tab" data-tab="bills">💰 账单</div>
+  <div class="tab" data-tab="reminders">📅 提醒</div>
+  <div class="tab" data-tab="all">📋 活动</div>
+</div>
+
+<div class="container" id="main-panel"></div>
+
+<script>
+/* ========== Detector ========== */
+const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 0 && window.innerWidth < 1024);
+
+/* ========== State ========== */
+const S = {
+  tab:'wallet',
+  overview:null,
+  cards:[],
+  cardsById:{},
+  selectedCardId:null,
+  categories:[],
+  activities:[],
+  activityFilter:{category:null},
+  searchResult:null,
+  wallet:[],
+  token: localStorage.getItem('ccreward_token') || '',
+  userId: localStorage.getItem('ccreward_uid') || '',
+};
+const API = '/api';
+const ICONS = {抖音:'🎵',美团:'🛵',支付宝:'💙',京东:'🛒',淘宝:'🛍️',饿了么:'🍜',滴滴:'🚗',微信:'💬',其他:'📌'};
+const QUICK = ['瑞幸咖啡','星巴克','麦当劳','肯德基','喜茶','海底捞','奈雪的茶','蜜雪冰城','必胜客','汉堡王','库迪咖啡','霸王茶姬','茶百道','塔斯汀','盒马鲜生'];
+
+async function get(p) { const r=await fetch(API+p, {headers:S.token?{'Authorization':'Bearer '+S.token}:{}}); if(!r.ok) { if(r.status===401) { await ensureAuth(); return get(p); } throw Error(`${p} ${r.status}`);} return r.json(); }
+async function post(p, body) { const r=await fetch(API+p, {method:'POST',headers:{'Content-Type':'application/json',...(S.token?{'Authorization':'Bearer '+S.token}:{})},body:JSON.stringify(body||{})}); if(!r.ok) throw Error(`${p} ${r.status}`); return r.json(); }
+async function patch(p, body) { const r=await fetch(API+p, {method:'PATCH',headers:{'Content-Type':'application/json',...(S.token?{'Authorization':'Bearer '+S.token}:{})},body:JSON.stringify(body||{})}); if(!r.ok) throw Error(`${p} ${r.status}`); return r.json(); }
+async function del(p) { const r=await fetch(API+p, {method:'DELETE',headers:S.token?{'Authorization':'Bearer '+S.token}:{}}); if(!r.ok) throw Error(`${p} ${r.status}`); return r.json(); }
+
+function esc(s) { return s?String(s).replace(/</g,'&lt;').replace(/>/g,'&gt;'):''; }
+
+/* card image with CSS gradient fallback */
+var BANK_COLORS = { '招商银行':['#d4380d','#ff7875'], '工商银行':['#cf1322','#f5222d'], '建设银行':['#003eb3','#1677ff'], '中信银行':['#c41d7f','#eb2f96'], '平安银行':['#fa8c16','#ffa940'], '广发银行':['#237804','#52c41a'], '浦发银行':['#003eb3','#4096ff'], '兴业银行':['#006d75','#13c2c2'], '民生银行':['#531dab','#9254de'], '光大银行':['#ad4e00','#d46b08'], '华夏银行':['#a8071a','#f5222d'], '邮储银行':['#00704a','#52c41a'], '交通银行':['#1d39c4','#597ef7'], '农业银行':['#08979c','#13c2c2'], '中国银行':['#a8071a','#cf1322'], '北京银行':['#003eb3','#2f54eb'], '上海银行':['#d48806','#fadb14'], '广州银行':['#1d39c4','#4096ff'], '杭州银行':['#237804','#52c41a'], '南京银行':['#ad4e00','#d46b08'], '成都银行':['#a8071a','#f5222d'], '深圳农商银行':['#1d39c4','#2f54eb'], '苏州银行':['#531dab','#9254de'], '江苏银行':['#0050b3','#4096ff'], '宁波银行':['#006d75','#08979c'], '重庆银行':['#ad2102','#d4380d'] };
+function bankGradient(bank) { var c = BANK_COLORS[bank] || ['#434343','#8c8c8c']; return 'linear-gradient(135deg,' + c[0] + ',' + c[1] + ')'; }
+function cardThumb(c) { var bg = bankGradient(c.bank); return '<div class="card-thumb-fallback" style="background:' + bg + '">' + esc(c.bank).slice(0,2) + '</div>'; }
+function t(text,type) { return `<span class="tag tag-${type}">${esc(text)}</span>`; }
+
+async function ensureAuth() {
+  if (S.token && S.userId) return;
+  try {
+    const r = await fetch(API+'/user/register', {method:'POST'});
+    const d = await r.json();
+    S.token = d.token;
+    S.userId = d.user_id;
+    localStorage.setItem('ccreward_token', S.token);
+    localStorage.setItem('ccreward_uid', S.userId);
+  } catch(e) { console.error('Auth failed:', e); }
+}
+
+/* ========== Platform search launcher ========== */
+var PLATFORM_LINKS = {
+  '抖音': { web:function(kw){return 'https://www.douyin.com/search/'+encodeURIComponent(kw+' 团购');}, app:function(kw){return 'douyin://search/'+encodeURIComponent(kw+' 团购');} },
+  '美团': { web:function(kw){return 'https://i.meituan.com/s/'+encodeURIComponent(kw)+'/';}, app:function(kw){return 'imeituan://www.meituan.com/deal/search?keyword='+encodeURIComponent(kw);} },
+  '饿了么': { web:function(kw){return 'https://h5.ele.me/search?keyword='+encodeURIComponent(kw);}, app:function(kw){return 'eleme://search?keyword='+encodeURIComponent(kw);} },
+  '支付宝': { web:function(kw){return 'https://render.alipay.com/p/s/search?keyword='+encodeURIComponent(kw);}, app:function(kw){return 'alipays://platformapi/startapp?appId=20001&page=pages/home/index&query='+encodeURIComponent('keyword='+kw);} },
+  '京东': { web:function(kw){return 'https://so.m.jd.com/ware/search.action?keyword='+encodeURIComponent(kw);}, app:function(kw){return 'openApp.jdMobile://virtual?params={"category":"jump","des":"search","keyword":"'+kw+'"}';} },
+  '淘宝': { web:function(kw){return 'https://m.taobao.com/search?q='+encodeURIComponent(kw);}, app:function(kw){return 'taobao://m.taobao.com/search?q='+encodeURIComponent(kw);} },
+  '滴滴': { web:function(kw){return 'https://common.diditaxi.com.cn/';}, app:function(kw){return 'diditaxi://';} },
+};
+
+function openDeal(platform, keyword) {
+  var cfg = PLATFORM_LINKS[platform]; if (!cfg) return;
+  var webUrl = cfg.web(keyword), appUrl = cfg.app(keyword);
+  if (isMobile && appUrl) {
+    var ifr = document.createElement('iframe'); ifr.style.display='none'; ifr.src=appUrl; document.body.appendChild(ifr);
+    var timer = setTimeout(function(){ document.body.removeChild(ifr); location.href=webUrl; }, 2500);
+    var c = function(){ clearTimeout(timer); };
+    document.addEventListener('visibilitychange', c, {once:true});
+    window.addEventListener('pagehide', c, {once:true});
+  } else {
+    var a = document.createElement('a'); a.href=webUrl; a.target='_blank'; a.rel='noopener noreferrer';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  }
+}
+
+/* ========== Init ========== */
+(async function init() {
+  await ensureAuth();
+  try {
+    const [ov,cats,cds] = await Promise.all([
+      get('/cards/stats/overview'), get('/activities/categories'), get('/cards?page_size=100'),
+    ]);
+    S.overview = ov; S.categories = cats;
+    S.cards = cds.items || cds;
+    S.cards.forEach(c=>{ c.benefits=c.benefits||[]; S.cardsById[c.id]=c; });
+    document.getElementById('hdr-cards').innerHTML = `📊 ${ov.cards}卡`;
+    document.getElementById('hdr-banks').innerHTML = `🏦 ${ov.banks}行`;
+    document.getElementById('hdr-activities').innerHTML = `🎫 ${ov.activities||'?'}活动`;
+  } catch(e) { console.error(e); }
+
+  document.querySelectorAll('.tab').forEach(el=>el.addEventListener('click',()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    el.classList.add('active');
+    S.tab = el.dataset.tab;
+    render();
+  }));
+  render();
+})();
+
+function render() {
+  const p = document.getElementById('main-panel');
+  if (S.tab==='wallet') renderWallet(p);
+  else if (S.tab==='recommend') renderRecommend(p);
+  else if (S.tab==='deals') renderDeals(p);
+  else if (S.tab==='cards') renderCards(p);
+  else if (S.tab==='compare') renderCompare(p);
+  else if (S.tab==='bills') renderBills(p);
+  else if (S.tab==='reminders') renderReminders(p);
+  else if (S.tab==='all') renderAllActivities(p);
+}
+
+/* ======== TAB 0: 我的卡包 ======== */
+async function renderWallet(panel) {
+  panel.innerHTML = '<div class="loading">⏳ 加载卡包...</div>';
+  try {
+    S.wallet = await get('/user/cards');
+  } catch(e) {
+    panel.innerHTML = `<div class="empty">加载失败: ${esc(e.message)}</div>`;
+    return;
+  }
+
+  let html = '';
+
+  if (S.wallet.length === 0) {
+    html = `<div class="empty"><div class="empty-icon">👛</div>卡包是空的<br><small>添加你的信用卡，统一管理权益</small></div>`;
+  } else {
+    // 汇总
+    const totalLimit = S.wallet.filter(c=>c.is_active).reduce((s,c)=>s+(c.credit_limit||0),0);
+    const activeCount = S.wallet.filter(c=>c.is_active).length;
+    html += `<div class="stats-grid">
+      <div class="stat-card"><div class="stat-value">${activeCount}</div><div class="stat-label">持有卡片</div></div>
+      <div class="stat-card"><div class="stat-value">¥${(totalLimit/10000).toFixed(1)}万</div><div class="stat-label">总额度</div></div>
+    </div>`;
+  }
+
+  // 卡片列表
+  S.wallet.forEach((c, i) => {
+    const bank = c.card ? c.card.bank : '自定义';
+    const name = c.card ? c.card.name : (c.nickname || '未命名');
+    const benefits = c.card ? (c.card.benefits || []) : [];
+    const last4 = c.last_four ? `**** ${esc(c.last_four)}` : '****';
+    const expire = c.expire_date ? esc(c.expire_date) : '';
+    const limitStr = c.credit_limit ? `额度 ¥${(c.credit_limit/10000).toFixed(1)}万` : '';
+    const issueStr = c.issue_date ? `办卡 ${esc(c.issue_date)}` : '';
+    const feeStr = c.annual_fee_condition ? esc(c.annual_fee_condition) : '';
+    const feeWaived = c.annual_fee_waived === true ? '<span style="color:#52c41a">✓ 已减免</span>' : (c.annual_fee_waived === false ? '<span style="color:#ff4d4f">✗ 未减免</span>' : '');
+
+    html += `<div class="wallet-card ${c.is_active===false?'inactive':''}">
+      <div class="wallet-card-bank">${esc(bank)}</div>
+      <div class="wallet-card-name">${esc(c.nickname || name)}</div>
+      <div class="wallet-card-last4">${last4}</div>
+      <div class="wallet-card-row">
+        <span>${limitStr}</span>
+        <span>${issueStr}${expire?' · 到期 '+expire:''}</span>
+      </div>
+      ${feeStr||feeWaived ? `<div class="wallet-card-row"><span>${feeStr}</span>${feeWaived}</div>` : ''}
+      ${c.notes ? `<div class="wallet-card-row"><span>📝 ${esc(c.notes)}</span></div>` : ''}
+      <div class="wallet-card-actions">
+        <button class="wallet-btn" onclick="openEditCard('${c.id}')">✏️ 编辑</button>
+        <button class="wallet-btn" onclick="toggleCardActive('${c.id}', ${!c.is_active})">${c.is_active===false?'恢复':'停用'}</button>
+        <button class="wallet-btn" onclick="deleteCard('${c.id}')">🗑️ 删除</button>
+      </div>
+    </div>`;
+  });
+
+  html += `<button class="add-card-btn" onclick="openAddCard()">➕ 添加信用卡</button>`;
+
+  panel.innerHTML = html;
+}
+
+function openAddCard() {
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.innerHTML = `<div class="modal" id="add-modal">
+    <div class="modal-header"><div class="modal-title">添加信用卡</div><button class="modal-close" onclick="this.closest('.modal-overlay').remove()">×</button></div>
+    <div id="add-content">
+      <div class="search-box">
+        <input id="card-search-input" placeholder="搜索卡名/银行，如：招行 白金" oninput="searchCardsForAdd()" />
+      </div>
+      <div id="card-search-results" style="min-height:60px;"></div>
+      <div class="section-label">或手动录入自定义卡</div>
+      <button class="add-card-btn" onclick="showManualEntry()">📝 手动录入（不在库中的卡）</button>
+    </div>
+  </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e=>{ if(e.target===modal) modal.remove(); });
+  document.getElementById('card-search-input')?.focus();
+}
+
+let searchTimer = null;
+function searchCardsForAdd() {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(async () => {
+    const kw = document.getElementById('card-search-input').value.trim();
+    const el = document.getElementById('card-search-results');
+    if (!kw) { el.innerHTML = ''; return; }
+    el.innerHTML = '<div class="loading">搜索中...</div>';
+    try {
+      const results = await get(`/user/cards/search?keyword=${encodeURIComponent(kw)}`);
+      el.innerHTML = results.length ? results.map(c=>`<div class="search-result-item" onclick='selectCardForAdd(${JSON.stringify(c)})'>
+        <div><div style="font-weight:500">${esc(c.bank)} ${esc(c.name)}</div><div style="font-size:12px;color:var(--text-secondary)">${esc(c.network)} · ${esc(c.level)} · ${esc(c.annual_fee)}</div></div>
+        <div style="color:var(--primary)">添加 ›</div></div>`).join('') : '<div class="empty">未找到，试试手动录入</div>';
+    } catch(e) { el.innerHTML = `<div class="empty">搜索失败</div>`; }
+  }, 300);
+}
+
+function selectCardForAdd(card) {
+  document.getElementById('add-content').innerHTML = `
+    <div class="card" style="background:var(--primary-light);border:1px solid var(--primary);">
+      <div style="font-weight:600;">${esc(card.bank)} ${esc(card.name)}</div>
+      <div style="font-size:13px;color:var(--text-secondary)">${esc(card.network)} · ${esc(card.level)} · 年费: ${esc(card.annual_fee)}</div>
+    </div>
+    <div class="form-group"><label>昵称（可选）</label><input id="add-nickname" placeholder="如：招行主卡" /></div>
+    <div class="form-row">
+      <div class="form-group"><label>卡号后四位</label><input id="add-last4" maxlength="4" placeholder="1234" /></div>
+      <div class="form-group"><label>额度（元）</label><input id="add-limit" type="number" placeholder="80000" /></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>办卡日期</label><input id="add-issue" placeholder="2024-03" /></div>
+      <div class="form-group"><label>到期月</label><input id="add-expire" placeholder="2029-08" /></div>
+    </div>
+    <div class="form-group"><label>年费减免条件</label><input id="add-fee-cond" placeholder="如：年刷6次免年费" /></div>
+    <div class="form-group"><label>备注</label><textarea id="add-notes" rows="2" placeholder="如：主刷卡 / 9分生活"></textarea></div>
+    <button class="btn-primary" onclick='confirmAddCard("${card.id}")'>添加到卡包</button>
+  `;
+}
+
+function showManualEntry() {
+  document.getElementById('add-content').innerHTML = `
+    <div class="card" style="background:var(--primary-light);border:1px solid var(--primary);">
+      <div style="font-weight:600;">📝 自定义卡片</div>
+      <div style="font-size:13px;color:var(--text-secondary)">不在种子库中的卡，手动录入</div>
+    </div>
+    <div class="form-group"><label>卡片名称 *</label><input id="add-nickname" placeholder="如：工行畅通卡" /></div>
+    <div class="form-row">
+      <div class="form-group"><label>卡号后四位</label><input id="add-last4" maxlength="4" placeholder="1234" /></div>
+      <div class="form-group"><label>额度（元）</label><input id="add-limit" type="number" placeholder="80000" /></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>办卡日期</label><input id="add-issue" placeholder="2024-03" /></div>
+      <div class="form-group"><label>到期月</label><input id="add-expire" placeholder="2029-08" /></div>
+    </div>
+    <div class="form-group"><label>年费减免条件</label><input id="add-fee-cond" placeholder="如：年刷6次免年费" /></div>
+    <div class="form-group"><label>备注</label><textarea id="add-notes" rows="2" placeholder="备注"></textarea></div>
+    <button class="btn-primary" onclick='confirmAddCard("")'>添加到卡包</button>
+  `;
+}
+
+async function confirmAddCard(cardId) {
+  const body = {
+    card_id: cardId || '',
+    nickname: val('add-nickname'),
+    last_four: val('add-last4'),
+    credit_limit: parseFloat(val('add-limit')) || null,
+    issue_date: val('add-issue'),
+    expire_date: val('add-expire'),
+    annual_fee_condition: val('add-fee-cond'),
+    notes: val('add-notes'),
+  };
+  try {
+    await post('/user/cards', body);
+    document.querySelector('.modal-overlay')?.remove();
+    await renderWallet(document.getElementById('main-panel'));
+  } catch(e) {
+    alert('添加失败: ' + e.message);
+  }
+}
+
+function val(id) { const el = document.getElementById(id); return el ? el.value.trim() : ''; }
+
+function openEditCard(userCardId) {
+  const c = S.wallet.find(x=>x.id===userCardId);
+  if (!c) return;
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.innerHTML = `<div class="modal">
+    <div class="modal-header"><div class="modal-title">编辑卡片信息</div><button class="modal-close" onclick="this.closest('.modal-overlay').remove()">×</button></div>
+    <div class="card" style="background:var(--primary-light);margin-bottom:16px;">
+      <div style="font-weight:600;">${esc(c.card?c.card.bank:'自定义')} ${esc(c.card?c.card.name:c.nickname||'')}</div>
+    </div>
+    <div class="form-group"><label>昵称</label><input id="edit-nickname" value="${esc(c.nickname||'')}" /></div>
+    <div class="form-row">
+      <div class="form-group"><label>卡号后四位</label><input id="edit-last4" maxlength="4" value="${esc(c.last_four||'')}" /></div>
+      <div class="form-group"><label>额度（元）</label><input id="edit-limit" type="number" value="${c.credit_limit||''}" /></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>办卡日期</label><input id="edit-issue" value="${esc(c.issue_date||'')}" placeholder="YYYY-MM" /></div>
+      <div class="form-group"><label>到期月</label><input id="edit-expire" value="${esc(c.expire_date||'')}" placeholder="YYYY-MM" /></div>
+    </div>
+    <div class="form-group"><label>年费减免条件</label><input id="edit-fee-cond" value="${esc(c.annual_fee_condition||'')}" /></div>
+    <div class="form-group"><label>年费是否已减免</label>
+      <select id="edit-fee-waived"><option value="">未知</option><option value="true" ${c.annual_fee_waived===true?'selected':''}>已减免</option><option value="false" ${c.annual_fee_waived===false?'selected':''}>未减免</option></select>
+    </div>
+    <div class="form-group"><label>备注</label><textarea id="edit-notes" rows="2">${esc(c.notes||'')}</textarea></div>
+    <button class="btn-primary" onclick="confirmEditCard('${c.id}')">保存</button>
+  </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e=>{ if(e.target===modal) modal.remove(); });
+}
+
+async function confirmEditCard(userCardId) {
+  const waivered = val('edit-fee-waived');
+  const body = {
+    nickname: val('edit-nickname') || null,
+    last_four: val('edit-last4') || null,
+    credit_limit: parseFloat(val('edit-limit')) || null,
+    issue_date: val('edit-issue') || null,
+    expire_date: val('edit-expire') || null,
+    annual_fee_condition: val('edit-fee-cond') || null,
+    annual_fee_waived: waivered === '' ? null : waivered === 'true',
+    notes: val('edit-notes') || null,
+  };
+  try {
+    await patch(`/user/cards/${userCardId}`, body);
+    document.querySelector('.modal-overlay')?.remove();
+    await renderWallet(document.getElementById('main-panel'));
+  } catch(e) { alert('保存失败: ' + e.message); }
+}
+
+async function toggleCardActive(userCardId, active) {
+  try {
+    await patch(`/user/cards/${userCardId}`, {is_active: active});
+    await renderWallet(document.getElementById('main-panel'));
+  } catch(e) { alert('操作失败: ' + e.message); }
+}
+
+async function deleteCard(userCardId) {
+  if (!confirm('确定删除这张卡？')) return;
+  try {
+    await del(`/user/cards/${userCardId}`);
+    await renderWallet(document.getElementById('main-panel'));
+  } catch(e) { alert('删除失败: ' + e.message); }
+}
+
+/* ======== TAB 1: Deals ======== */
+function renderDeals(panel) {
+  panel.innerHTML = `
+    <div class="search-box">
+      <input id="searchInput" placeholder="搜商品比价：瑞幸咖啡 / 星巴克 / 海底捞..." onkeydown="if(event.key==='Enter')doSearch()">
+      <button onclick="doSearch()">比价</button>
+    </div>
+    <div class="quick-tags">${QUICK.map(k=>`<span class="quick-tag" onclick="document.getElementById('searchInput').value='${k}';doSearch()">${k}</span>`).join('')}</div>
+    <div id="deals-result"><div class="empty"><div class="empty-icon">🔍</div>输入关键词搜索，看各平台价格参考<br><small>点「去XX搜」跳转平台App/网页，在平台内查看真实优惠下单</small></div></div>`;
+  document.getElementById('searchInput')?.focus();
+}
+
+function doSearch() {
+  const kw = document.getElementById('searchInput').value.trim();
+  const el = document.getElementById('deals-result');
+  if(!kw){ el.innerHTML='<div class="empty">请输入搜索关键词</div>'; return; }
+  el.innerHTML='<div class="loading">⏳ 搜索中...</div>';
+  // 本地搜索
+  const kwLower = kw.toLowerCase();
+  const items = DATA.activities.filter(a => {
+    const text = ((a.title||'') + (a.merchant_name||'') + (a.product_name||'') + (a.category||'')).toLowerCase();
+    return text.includes(kwLower);
+  }).sort((a,b) => (a.activity_price||999) - (b.activity_price||999));
+  // 标记最低价
+  const cheapestPrice = items.length && items[0].activity_price ? items[0].activity_price : null;
+  const platforms = [...new Set(items.map(i => i.platform))];
+  const result = {
+    keyword: kw,
+    items: items.map(i => ({
+      title: i.title,
+      platform: i.platform,
+      platform_label: i.platform,
+      activity_price: i.activity_price,
+      original_price: i.original_price,
+      discount_description: i.discount_description,
+      usage_conditions: i.usage_conditions,
+      source_url: i.source_url,
+      app_url: i.app_url,
+      is_cheapest: cheapestPrice && i.activity_price === cheapestPrice,
+    })),
+    cheapest_price: cheapestPrice,
+    cheapest_platform: cheapestPrice ? items[0].platform : null,
+    total_platforms: platforms.length,
+  };
+  S.searchResult = result;
+  renderDealsResult();
+}
+
+function renderDealsResult() {
+  const r = S.searchResult, el = document.getElementById('deals-result');
+  if(!r.items.length){ el.innerHTML=`<div class="empty"><div class="empty-icon">😕</div>未找到"${esc(r.keyword)}"</div>`; return; }
+  const cheapest = r.items.find(i=>i.is_cheapest);
+  const summary = r.cheapest_price!=null ? `
+    <div class="compare-summary">
+      <div class="cheapest-label">"${esc(r.keyword)}" 比价结果</div>
+      <div class="cheapest-value">¥${r.cheapest_price}</div>
+      <div class="cheapest-platform">🏆 最低价平台：${esc(r.cheapest_platform)}</div>
+      ${cheapest ? `<button style="margin-top:12px;padding:10px 32px;background:var(--success);color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;" onclick="openDeal('${esc(cheapest.platform_label)}','${esc(r.keyword)}')">去 ${esc(r.cheapest_platform)} 搜索 ¥${r.cheapest_price} →</button>` : ''}
+    </div>` : '';
+  const items = r.items.map(i=>{
+    const hasP = i.activity_price!=null&&i.activity_price>0;
+    const priceHtml = hasP ? `<span class="price-now">¥${i.activity_price}</span>${i.original_price>i.activity_price?`<span class="price-old">¥${i.original_price}</span>`:''}` : '<span class="price-now" style="font-size:14px;">见详情</span>';
+    const plt = esc(i.platform_label);
+    return `<div class="activity-item ${i.is_cheapest?'cheapest':''}">
+      <div class="activity-top"><div class="activity-name">${esc(i.title)} ${t(plt,'blue')} ${i.is_cheapest?t('最低价','green'):''}</div><div class="activity-price-box">${priceHtml}</div></div>
+      <div class="activity-desc">${esc(i.discount_description)}</div>
+      ${i.usage_conditions?`<div class="activity-conds">📋 ${esc(i.usage_conditions)}</div>`:''}
+      <div class="activity-bottom"><span style="font-size:12px;color:var(--text-secondary);">${ICONS[plt]||'📌'} ${plt}平台</span><button class="btn-deal ${i.is_cheapest?'cheapest-deal':''}" onclick="openDeal('${plt}','${esc(r.keyword)}')">去${plt}搜 →</button></div>
+      <div class="deal-hint">${isMobile ? '📱 唤起'+plt+'App → 搜索优惠' : '🖥️ 打开'+plt+'搜索页'}</div></div>`;
+  }).join('');
+  el.innerHTML = summary + `<div class="section-label">共 ${r.items.length} 条优惠 · 覆盖 ${r.total_platforms} 平台</div>` + items;
+}
+
+/* ======== TAB 2: Cards ======== */
+function renderCards(panel) {
+  if(!S.cards.length){ panel.innerHTML='<div class="loading">加载卡片...</div>'; return; }
+  if(!S.selectedCardId) S.selectedCardId = S.cards[0].id;
+  const vc = S.cardsById[S.selectedCardId];
+  const banks={}; S.cards.forEach(c=>{ (banks[c.bank]=banks[c.bank]||[]).push(c); });
+  const bp = Object.keys(banks).sort().map(b=>`
+    <div class="bank-group"><div class="bank-label">${esc(b)}（${banks[b].length}张）</div>
+    ${banks[b].map(c=>`<div class="card-pick ${c.id===S.selectedCardId?'selected':''}" onclick="S.selectedCardId='${c.id}';render()" style="display:flex;align-items:center;gap:10px;">
+      ${cardThumb(c)}
+      <div style="flex:1;"><div class="card-pick-name">${esc(c.name)}</div><div class="card-pick-benefits">${c.network} · ${c.level} · ${c.benefits?.length||0}项权益</div></div>
+      <div style="color:var(--primary);font-size:16px;">›</div></div>`).join('')}</div>`).join('');
+  const bh = vc.benefits?.length ? vc.benefits.map(b=>`<div class="benefit-item"><h4>${esc(b.title)} ${t(b.benefit_type,'blue')} ${t(b.category,'green')}</h4><p>${esc(b.description)}</p><div class="benefit-tags">${b.value_text?t(b.value_text,'orange'):''}${b.discount_percent?t(`${b.discount_percent}折`,'red'):''}${b.points_per_yuan?t(`${b.points_per_yuan}积分/元`,'blue'):''}${b.cashback_percent?t(`返${b.cashback_percent}%`,'red'):''}${b.usage_limit?t(b.usage_limit,'orange'):''}</div></div>`).join('') : '<div class="empty">暂无权益数据</div>';
+  panel.innerHTML = `
+    <div class="card"><div class="card-header"><div class="card-title">${esc(vc.bank)} ${esc(vc.name)}</div><div>${t(vc.network,'blue')} ${t(vc.level,'green')}</div></div><div class="card-meta">年费：${esc(vc.annual_fee)}${vc.description?' · '+esc(vc.description):''}</div></div>
+    <div class="section-label">📋 选择卡片（点击切换）</div>${bp}
+    <div class="section-label">🎁 ${vc.bank} ${vc.name} 权益（${vc.benefits?.length||0}项）</div>${bh}
+    <div class="section-label">🎯 积分兑换</div><div id="redemptions-area"><div class="loading">加载中...</div></div>`;
+  { const items = vc.redemptions || [];
+    document.getElementById('redemptions-area').innerHTML = items.length ? items.map(r=>'<div class="redemption-item"><div class="redemption-info"><h4>'+esc(r.item_name)+'</h4><p>'+esc(r.merchant_name)+' · '+esc(r.category)+'</p></div><div class="redemption-right"><div class="redemption-points">'+r.points_required+'积分</div>'+(r.cash_value?'<div class="redemption-value">≈¥'+r.cash_value+'</div>':'')+'</div></div>').join('') : '<div class="empty">暂无兑换商品</div>';
+  }
+}
+
+/* ======== TAB 3: All Activities ======== */
+function renderAllActivities(panel) {
+  panel.innerHTML = `<div id="cat-filters" class="filter-row"><div class="loading">加载分类...</div></div><div class="section-label" id="act-count">加载中...</div><div id="act-list"><div class="loading">加载活动...</div></div>`;
+  loadActivities();
+}
+
+function loadActivities() {
+  S.activities = DATA.activities.slice().sort((a,b) => (a.activity_price||999) - (b.activity_price||999));
+  renderActivityFilters();
+  renderActivityList();
+}
+
+function renderActivityFilters() {
+  if(!S.categories.length) return;
+  const el = document.getElementById('cat-filters');
+  el.innerHTML = `<span class="filter-chip ${!S.activityFilter.category?'active':''}" onclick="S.activityFilter.category=null;renderActivityList();renderActivityFilters()">全部<span class="badge">${S.activities.length}</span></span>${S.categories.map(c=>`<span class="filter-chip ${S.activityFilter.category===c.category?'active':''}" onclick="S.activityFilter.category='${c.category}';renderActivityList();renderActivityFilters()">${esc(c.category)}<span class="badge">${c.count}</span></span>`).join('')}`;
+}
+
+function renderActivityList() {
+  const filtered = S.activityFilter.category ? S.activities.filter(a=>a.category===S.activityFilter.category) : S.activities;
+  document.getElementById('act-count').textContent = `📋 共 ${filtered.length} 条活动`;
+  const el = document.getElementById('act-list');
+  if(!filtered.length){ el.innerHTML='<div class="empty">该分类暂无活动</div>'; return; }
+  el.innerHTML = filtered.map(a=>{
+    const hasP = a.activity_price!=null&&a.activity_price>0;
+    const priceHtml = hasP ? `<span class="price-now">¥${a.activity_price}</span>${a.original_price>a.activity_price?`<span class="price-old">¥${a.original_price}</span>`:''}` : '<span class="price-now" style="font-size:14px;">见详情</span>';
+    const plt = esc(a.platform);
+    const kw = esc(a.merchant_name || a.product_name || '');
+    return `<div class="activity-item"><div class="activity-top"><div class="activity-name">${esc(a.title)} ${t(plt,'blue')} ${t(a.category,'green')}</div><div class="activity-price-box">${priceHtml}</div></div><div class="activity-desc">${esc(a.discount_description)}</div>${a.usage_conditions?`<div class="activity-conds">📋 ${esc(a.usage_conditions)}</div>`:''}<div class="activity-bottom"><span style="font-size:12px;color:var(--text-secondary);">${esc(a.merchant_name)} · ${ICONS[plt]||''} ${plt}</span><button class="btn-deal" onclick="openDeal('${plt}','${kw}')">去${plt}搜 →</button></div><div class="deal-hint">${isMobile?'📱 唤起'+plt+'App':'🖥️ 打开'+plt+'搜索页'}</div></div>`;
+  }).join('');
+}
+
+/* ======== TAB: 场景推荐 ======== */
+function renderRecommend(panel) {
+  panel.innerHTML = `
+    <div class="card"><div class="card-title">🎯 场景推荐</div><div class="card-meta">输入消费场景，推荐最合适的信用卡</div></div>
+    <div class="search-box">
+      <input id="recommendInput" placeholder="如：星巴克 / 加油 / 外卖 / 看电影..." onkeydown="if(event.key==='Enter')doRecommend()">
+      <button onclick="doRecommend()">推荐</button>
+    </div>
+    <div class="quick-tags">${['星巴克','瑞幸咖啡','加油','外卖','看电影','火锅','京东购物','高铁出行'].map(k=>`<span class="quick-tag" onclick="document.getElementById('recommendInput').value='${k}';doRecommend()">${k}</span>`).join('')}</div>
+    <div id="recommend-result"><div class="empty"><div class="empty-icon">💡</div>输入消费场景，看看哪张卡最划算</div></div>`;
+}
+
+async function doRecommend() {
+  const kw = document.getElementById('recommendInput').value.trim();
+  const el = document.getElementById('recommend-result');
+  if(!kw){ el.innerHTML='<div class="empty">请输入场景关键词</div>'; return; }
+  el.innerHTML='<div class="loading">⏳ 分析中...</div>';
+  try {
+    const r = await get(`/recommend/scenario?scenario=${encodeURIComponent(kw)}`);
+    if(!r.recommendations||!r.recommendations.length){ el.innerHTML='<div class="empty">暂无匹配推荐</div>'; return; }
+    el.innerHTML = `<div class="section-label">"${esc(kw)}" 推荐 ${r.recommendations.length} 张卡</div>` +
+      r.recommendations.map((c,i)=>`
+        <div class="card" style="${i===0?'border:2px solid var(--primary);background:var(--primary-light);':''}">
+          <div class="card-header">
+            <div class="card-title">${i===0?'🏆 ':''}${c.card?.bank||''} ${c.card?.name||''} ${t('得分'+c.score,'blue')}</div>
+          </div>
+          <div class="card-meta">${c.reason||''}</div>
+          ${(c.matched_benefits||[]).length?`<div style="margin-top:8px;">${c.matched_benefits.map(b=>`<div class="benefit-item"><h4>${esc(b.title)} ${t(b.benefit_type,'blue')} ${t(b.category,'green')}</h4><p>${esc(b.description)}</p></div>`).join('')}</div>`:''}
+        </div>`).join('');
+  } catch(e) { el.innerHTML=`<div class="empty">推荐失败: ${esc(e.message)}</div>`; }
+}
+
+/* ======== TAB: 多卡对比 ======== */
+function renderCompare(panel) {
+  if(!S.cards.length){ panel.innerHTML='<div class="loading">加载卡片...</div>'; return; }
+  const banks={}; S.cards.forEach(c=>{ (banks[c.bank]=banks[c.bank]||[]).push(c); });
+  const picker = Object.keys(banks).sort().map(b=>`
+    <div class="bank-group"><div class="bank-label">${esc(b)}</div>
+    ${banks[b].map(c=>`<div class="card-pick ${(S.compareIds||[]).includes(c.id)?'selected':''}" onclick="toggleCompare('${c.id}')" style="display:flex;align-items:center;gap:10px;">
+      ${cardThumb(c)}<div style="flex:1;"><div class="card-pick-name">${esc(c.name)}</div><div class="card-pick-benefits">${c.benefits?.length||0}项权益</div></div></div>`).join('')}
+    </div>`).join('');
+  panel.innerHTML = `
+    <div class="card"><div class="card-title">📊 多卡对比</div><div class="card-meta">选择 2-3 张卡，同场景下横向对比</div></div>
+    <div class="search-box"><input id="compareScenario" placeholder="对比场景（可选）：如 咖啡 / 购物" /></div>
+    <div style="margin-bottom:8px;">已选：<span id="compare-selected" style="color:var(--primary);font-weight:600;">${(S.compareIds||[]).length||0}</span> 张</div>
+    ${picker}
+    <button class="btn-primary" onclick="doCompare()" ${(S.compareIds||[]).length<2?'disabled style="opacity:0.5;"':''}>开始对比</button>
+    <div id="compare-result" style="margin-top:16px;"></div>`;
+  S.compareIds = S.compareIds || [];
+}
+
+function toggleCompare(cid) {
+  S.compareIds = S.compareIds || [];
+  const idx = S.compareIds.indexOf(cid);
+  if(idx>=0) S.compareIds.splice(idx,1);
+  else if(S.compareIds.length<4) S.compareIds.push(cid);
+  renderCompare(document.getElementById('main-panel'));
+}
+
+async function doCompare() {
+  const ids = (S.compareIds||[]).slice(0,4);
+  if(ids.length<2) return;
+  const scenario = document.getElementById('compareScenario').value.trim();
+  const el = document.getElementById('compare-result');
+  el.innerHTML='<div class="loading">⏳ 对比中...</div>';
+  try {
+    const r = await get(`/recommend/compare?card_ids=${ids.join(',')}${scenario?'&scenario='+encodeURIComponent(scenario):''}`);
+    const cards = r.cards||[];
+    if(!cards.length){ el.innerHTML='<div class="empty">无对比结果</div>'; return; }
+    let h = '';
+    if(r.winner) h += `<div class="compare-summary"><div class="cheapest-label">🏆 ${scenario?'"'+esc(scenario)+'" 场景':''} 胜出</div><div class="cheapest-platform">${esc(r.winner.bank)} ${esc(r.winner.name)} — 评分 ${r.winner.score}</div><div style="font-size:13px;color:var(--text-secondary);margin-top:4px;">${esc(r.winner_reason||'')}</div></div>`;
+    h += `<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:13px;"><thead><tr><th style="padding:8px;border-bottom:2px solid var(--border);text-align:left;">维度</th>${cards.map(c=>`<th style="padding:8px;border-bottom:2px solid var(--border);text-align:center;">${esc(c.bank)}<br>${esc(c.name)}</th>`).join('')}</tr></thead><tbody>`;
+    ['返现得分','折扣得分','积分得分','权益数'].forEach(dim=>{
+      h += `<tr><td style="padding:8px;border-bottom:1px solid var(--border);">${dim}</td>${cards.map(c=>`<td style="padding:8px;border-bottom:1px solid var(--border);text-align:center;font-weight:600;">${c.score_breakdown?.[dim]||'—'}</td>`).join('')}</tr>`;
+    });
+    h += `</tbody></table></div>`;
+    if(cards.some(c=>c.benefits&&c.benefits.length)) {
+      h += `<div class="section-label">📋 场景匹配权益</div>`;
+      cards.forEach(c=>{
+        if(!c.benefits||!c.benefits.length) return;
+        h += `<div style="margin-bottom:12px;"><div style="font-weight:600;margin-bottom:4px;">${esc(c.bank)} ${esc(c.name)}</div>${c.benefits.map(b=>`<div class="benefit-item"><h4>${esc(b.title)} ${t(b.benefit_type,'blue')} ${t(b.category,'green')}</h4><p>${esc(b.description)}</p></div>`).join('')}</div>`;
+      });
+    }
+    el.innerHTML = h;
+  } catch(e) { el.innerHTML=`<div class="empty">对比失败: ${esc(e.message)}</div>`; }
+}
+
+/* ======== TAB: 权益提醒 ======== */
+function renderReminders(panel) {
+  panel.innerHTML = `
+    <div class="card"><div class="card-title">📅 权益提醒</div><div class="card-meta">到期提醒、权益使用进度、年费减免追踪</div></div>
+    <div id="reminders-content"><div class="loading">⏳ 加载中...</div></div>`;
+  loadReminders();
+}
+
+async function loadReminders() {
+  const el = document.getElementById('reminders-content');
+  try {
+    const [exp, fee] = await Promise.all([
+      get('/reminders/expiring?within_days=60').catch(()=>null),
+      get('/reminders/annual-fee').catch(()=>null),
+    ]);
+    let h = '';
+    // Expiring alerts
+    if(exp&&exp.expiring_cards&&exp.expiring_cards.length) {
+      h += `<div class="section-label">⚠️ 即将到期</div>`;
+      exp.expiring_cards.forEach(c=>{
+        h += `<div class="card" style="border-left:4px solid var(--warning);"><div class="card-title">${esc(c.bank||'')} ${esc(c.name||'')}</div><div class="card-meta">到期: ${esc(c.expire_date)} · ${c.days_left?esc(c.days_left)+'天后到期':''}</div></div>`;
+      });
+    } else {
+      h += `<div class="empty"><div class="empty-icon">✅</div>暂无即将到期的卡片</div>`;
+    }
+    // Annual fee progress
+    if(fee&&fee.items&&fee.items.length) {
+      h += `<div class="section-label" style="margin-top:16px;">💳 年费减免进度</div>`;
+      fee.items.forEach(f=>{
+        h += `<div class="card"><div class="card-title">${esc(f.bank||'')} ${esc(f.card_name||f.nickname||'')}</div><div class="card-meta">${esc(f.fee_condition||'')}</div>${f.waived?t('已减免','green'):t('未减免','red')}</div>`;
+      });
+    }
+    // Wallet cards with usage tracking
+    if(S.wallet.length) {
+      h += `<div class="section-label" style="margin-top:16px;">📊 权益使用进度</div>`;
+      S.wallet.forEach(c=>{
+        if(!c.card||!c.card.benefits) return;
+        h += `<div class="card"><div class="card-title">${esc(c.card.bank)} ${esc(c.card.name||c.nickname||'')}</div>`;
+        h += c.card.benefits.slice(0,5).map(b=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);"><div><span style="font-size:13px;">${esc(b.title)}</span> ${t(b.benefit_type,'blue')}</div><button class="wallet-btn" style="color:var(--primary);border-color:var(--primary);" onclick="useBenefit('${c.id}','${b.id}')">使用 +1</button></div>`).join('');
+        h += `</div>`;
+      });
+    }
+    el.innerHTML = h || '<div class="empty">添加信用卡到卡包后可查看权益追踪</div>';
+  } catch(e) { el.innerHTML=`<div class="empty">加载失败: ${esc(e.message)}</div>`; }
+}
+
+async function useBenefit(userCardId, benefitId) {
+  try {
+    await post(`/reminders/usage/${benefitId}/use?user_card_id=${userCardId}`);
+    renderReminders(document.getElementById('main-panel'));
+  } catch(e) { alert('记录失败: '+e.message); }
+}
+
+/* ======== TAB: 账单管理 ======== */
+function renderBills(panel) {
+  panel.innerHTML = `
+    <div class="card"><div class="card-title">💰 账单与额度管理</div><div class="card-meta">账单日/还款日、额度追踪、消费记录</div></div>
+    <div id="bills-content"><div class="loading">⏳ 加载中...</div></div>`;
+  loadBills();
+}
+
+async function loadBills() {
+  var el = document.getElementById('bills-content');
+  try {
+    var summary = await get('/bills/summary').catch(function(){return null;});
+    var upcoming = await get('/bills/upcoming?within_days=7').catch(function(){return null;});
+    var h = '';
+    // Summary card
+    if(summary) {
+      h += `<div class="card"><div class="card-title">📊 账单总览</div><div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:8px;">
+        <div class="stat-card"><div class="stat-num">¥${(summary.total_credit_limit||0).toFixed(0)}</div><div class="stat-label">总额度</div></div>
+        <div class="stat-card"><div class="stat-num" style="color:var(--warning);">¥${(summary.total_balance||0).toFixed(0)}</div><div class="stat-label">总欠款</div></div>
+        <div class="stat-card"><div class="stat-num" style="color:${summary.overall_usage_rate>70?'var(--danger)':'var(--primary)'};">${(summary.overall_usage_rate||0).toFixed(1)}%</div><div class="stat-label">使用率</div></div>
+        <div class="stat-card"><div class="stat-num">${summary.unpaid_count||0}</div><div class="stat-label">未还账单</div></div>
+      </div></div>`;
+    }
+    // Upcoming
+    if(upcoming&&upcoming.bills&&upcoming.bills.length){
+      h += `<div class="section-label">📅 ${upcoming.within_days||7}天内待还款</div>`;
+      upcoming.bills.forEach(function(b){
+        var dd = new Date(b.due_date_this_month||b.due_date);
+        var days = Math.ceil((dd - new Date())/(86400000));
+        h += `<div class="card" style="border-left:4px solid ${days<=3?'var(--danger)':'var(--warning)'};"><div class="card-header" style="display:flex;justify-content:space-between;"><div class="card-title">${esc(b.bank||'')} ${esc(b.card_name||b.card_name_display||'')}</div><div style="font-size:13px;color:${days<=3?'var(--danger)':'var(--text-secondary)'};">${days<=0?'今天到期':days+'天后'}</div></div><div class="card-meta">应还: ¥${(b.current_balance||0).toFixed(2)} · 账单日 ${b.statement_date}号 · 还款日 ${b.due_date}号</div></div>`;
+      });
+    }
+    // Wallet cards - bill management
+    if(S.wallet.length){
+      h += `<div class="section-label" style="margin-top:16px;">💳 录入帐单</div>`;
+      h += `<div class="search-box"><select id="billCardSelect">${S.wallet.map(function(c){return `<option value="${c.id}">${esc(c.card?c.card.bank:'')} ${esc(c.card?c.card.name:c.nickname||'')}</option>`;}).join('')}</select></div>`;
+      h += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0;">
+        <div><label style="font-size:12px;">本期金额 ¥</label><input id="billAmount" type="number" step="0.01" placeholder="0.00" style="width:100%;"></div>
+        <div><label style="font-size:12px;">额度 ¥</label><input id="billLimit" type="number" step="0.01" placeholder="从卡信息自动填"></div>
+        <div><label style="font-size:12px;">账单日</label><input id="billStmtDate" type="number" min="1" max="28" value="1"></div>
+        <div><label style="font-size:12px;">还款日</label><input id="billDueDate" type="number" min="1" max="31" value="25"></div>
+      </div>
+      <button class="btn-primary" onclick="addBill()">录入账单</button>`;
+      // Expense input
+      h += `<div class="section-label" style="margin-top:16px;">💸 快捷记账</div>`;
+      h += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0;">
+        <div><label style="font-size:12px;">金额 ¥</label><input id="expAmount" type="number" step="0.01" placeholder="0.00" style="width:100%;"></div>
+        <div><label style="font-size:12px;">分类</label><select id="expCategory"><option>餐饮</option><option>购物</option><option>出行</option><option>娱乐</option><option>生活</option><option>其他</option></select></div>
+        <div style="grid-column:1/3;"><label style="font-size:12px;">备注</label><input id="expDesc" placeholder="如：星巴克咖啡" style="width:100%;"></div>
+      </div>
+      <button class="btn-primary" style="margin-bottom:16px;" onclick="addExpense()">记账</button>`;
+    } else {
+      h += `<div class="empty"><div class="empty-icon">👛</div>先在「卡包」里添加你的信用卡</div>`;
+    }
+    el.innerHTML = h;
+  } catch(e) { el.innerHTML=`<div class="empty">加载失败: ${esc(e.message)}</div>`; }
+}
+
+async function addBill() {
+  var uci = document.getElementById('billCardSelect').value;
+  var data = {
+    user_card_id: uci,
+    current_balance: parseFloat(document.getElementById('billAmount').value)||null,
+    credit_limit: parseFloat(document.getElementById('billLimit').value)||null,
+    statement_date: parseInt(document.getElementById('billStmtDate').value)||1,
+    due_date: parseInt(document.getElementById('billDueDate').value)||25,
+  };
+  if(!data.current_balance){ alert('请输入本期金额'); return; }
+  try {
+    await post('/bills', data);
+    loadBills();
+  } catch(e) { alert('录入失败: '+e.message); }
+}
+
+async function addExpense() {
+  var uci = document.getElementById('billCardSelect').value;
+  var data = {
+    user_card_id: uci,
+    amount: parseFloat(document.getElementById('expAmount').value),
+    category: document.getElementById('expCategory').value,
+    description: document.getElementById('expDesc').value||null,
+  };
+  if(!data.amount||data.amount<=0){ alert('请输入有效金额'); return; }
+  try {
+    await post('/expenses', data);
+    document.getElementById('expAmount').value='';
+    document.getElementById('expDesc').value='';
+    loadBills();
+  } catch(e) { alert('记账失败: '+e.message); }
+}
+
+/* ======== card image fallback ======== */
+var BANK_COLORS={'工商银行':'#e41e26,#c4121a','建设银行':'#005bac,#003d7a','农业银行':'#009b77,#007a5e','中国银行':'#b91a2e,#8b1220','招商银行':'#cc0000,#990000','交通银行':'#004b87,#00335c','中信银行':'#c41230,#900018','光大银行':'#7b2d8b,#5a1f65','华夏银行':'#c41230,#900018','民生银行':'#009b77,#007a5e','兴业银行':'#004b87,#00335c','浦发银行':'#004b87,#00335c','广发银行':'#c41230,#900018','平安银行':'#e7651d,#c05010','邮储银行':'#009444,#006630','上海银行':'#005bac,#003d7a','北京银行':'#e41e26,#c4121a','南京银行':'#009b77,#007a5e','广州银行':'#e7651d,#c05010','杭州银行':'#004b87,#00335c','成都银行':'#e41e26,#c4121a','深圳农商银行':'#009b77,#007a5e','苏州银行':'#005bac,#003d7a','江苏银行':'#005bac,#003d7a','宁波银行':'#004b87,#00335c','重庆银行':'#c41230,#900018'};
+function cardThumb(c) {
+  var b=c.bank||''; var colors=BANK_COLORS[b]||'#1677ff,#0958d9';
+  return '<div style="width:48px;height:32px;border-radius:4px;background:linear-gradient(135deg,'+colors+');display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;font-weight:700;flex-shrink:0;">'+esc(b.slice(0,2))+'</div>';
+}
+</script>
+<script>
+const DATA = {"categories": {"value": [{"category": "åå¡è¶é¥®", "count": 30}, {"category": "é¤é¥®ç¾é£", "count": 29}, {"category": "è¶å¸ä¾¿å©", "count": 11}, {"category": "åºè¡ææ¸¸", "count": 10}], "Count": 4}, "activities": [{"platform": "æ»´æ»´", "platform_label": "æ»´æ»´", "activity_id": "act_didi_starbucks", "title": "æå·´åæ»´æ»´ä¸è½¦ å°åºç«å5å", "activity_price": 0.0, "original_price": 5.0, "discount_description": "æ»´æ»´Appæè½¦å»æå·´åï¼å°åºæ¶è´¹ç«å5å", "usage_conditions": "æ»´æ»´Appæè½¦å°æå·´åé¨åº", "source_url": "https://www.didiglobal.com/", "app_url": "diditaxi://", "is_cheapest": true}, {"platform": "æ»´æ»´", "platform_label": "æ»´æ»´", "activity_id": "act_didi_kuaiche_5", "title": "æ»´æ»´å¿«è½¦ å·¥ä½æ¥9æå¸", "activity_price": 0.0, "original_price": 0.0, "discount_description": "å·¥ä½æ¥å¿«è½¦9æï¼æé«å5å", "usage_conditions": "æ»´æ»´App/å°ç¨åºæè½¦", "source_url": "https://www.didiglobal.com/", "app_url": "diditaxi://", "is_cheapest": true}, {"platform": "æ¯ä»å®", "platform_label": "æ¯ä»å®", "activity_id": "act_al_didi_8", "title": "æ»´æ»´æ¯ä»å® 88æå¸", "activity_price": 0.0, "original_price": 0.0, "discount_description": "æ¯ä»å®æ»´æ»´88æï¼æé«å8å", "usage_conditions": "æ¯ä»å®æ»´æ»´å°ç¨åº", "source_url": "https://render.alipay.com/p/s/didi", "app_url": "alipays://platformapi/startapp?appId=20000778&sourceId=ccreward&page=pages/index/index", "is_cheapest": true}, {"platform": "æ¯ä»å®", "platform_label": "æ¯ä»å®", "activity_id": "act_al_gaode_5", "title": "é«å¾·æè½¦ æ¯ä»å®88æå¸", "activity_price": 0.0, "original_price": 0.0, "discount_description": "é«å¾·æè½¦88æï¼æé«å5å", "usage_conditions": "æ¯ä»å®é«å¾·æè½¦å°ç¨åº", "source_url": "https://render.alipay.com/p/s/amap", "app_url": "alipays://platformapi/startapp?appId=20000540&page=pages/index/index", "is_cheapest": true}, {"platform": "ç¾å¢", "platform_label": "ç¾å¢", "activity_id": "act_mt_gaode_3", "title": "é«å¾·æè½¦ ç¾å¢é¢å¸ç«å3å", "activity_price": 0.0, "original_price": 0.0, "discount_description": "ç¾å¢åé¢é«å¾·æè½¦å¸ï¼ç«å3å", "usage_conditions": "ç¾å¢Appé¢åï¼é«å¾·æè½¦ä½¿ç¨", "source_url": "https://i.meituan.com/s/%E9%AB%98%E5%BE%B7%E6%89%93%E8%BD%A6/", "app_url": "imeituan://www.meituan.com/deal/search?keyword=é«å¾·æè½¦", "is_cheapest": true}, {"platform": "æé³", "platform_label": "æé³", "activity_id": "act_dy_t3_8", "title": "T3åºè¡æé³å¸ 8æå¸", "activity_price": 0.0, "original_price": 0.0, "discount_description": "T3åºè¡8æï¼æé«å8å", "usage_conditions": "æé³Appä¸åï¼T3åºè¡Appä½¿ç¨", "source_url": "https://www.douyin.com/search/T3%E5%87%BA%E8%A1%8C%E5%9B%A2%E8%B4%AD?type=general", "app_url": "douyin://search/T3%E5%87%BA%E8%A1%8C%E5%9B%A2%E8%B4%AD?type=general", "is_cheapest": true}, {"platform": "æé³", "platform_label": "æé³", "activity_id": "act_dy_milktea_6", "title": "èéªå°åæé³å¸ 6.6å2æ¯", "activity_price": 6.6, "original_price": 12.0, "discount_description": "6.6å2æ¯ï¼ç¸å½äº3.3å/æ¯", "usage_conditions": "æé³Appä¸å", "source_url": "https://www.douyin.com/search/%E8%9C%9C%E9%9B%AA%E5%86%B0%E5%9F%8E%E5%9B%A2%E8%B4%AD?type=general", "app_url": "douyin://search/%E8%9C%9C%E9%9B%AA%E5%86%B0%E5%9F%8E%E5%9B%A2%E8%B4%AD?type=general", "is_cheapest": false}, {"platform": "æé³", "platform_label": "æé³", "activity_id": "act_dy_cotti_7", "title": "åºè¿ªåå¡æé³å¸ 7.7ååæ¯", "activity_price": 7.7, "original_price": 18.0, "discount_description": "7.7ååæ¯ï¼ç10.3å", "usage_conditions": "æé³Appä¸å", "source_url": "https://www.douyin.com/search/%E5%BA%93%E8%BF%AA%E5%92%96%E5%95%A1%E5%9B%A2%E8%B4%AD?type=general", "app_url": "douyin://search/%E5%BA%93%E8%BF%AA%E5%92%96%E5%95%A1%E5%9B%A2%E8%B4%AD?type=general", "is_cheapest": false}, {"platform": "æé³", "platform_label": "æé³", "activity_id": "act_dy_chabaidao_8", "title": "è¶ç¾éæé³å¸ 8.8ååæ¯", "activity_price": 8.8, "original_price": 18.0, "discount_description": "8.8ååæ¯ï¼ç9.2å", "usage_conditions": "æé³Appä¸å", "source_url": "https://www.douyin.com/search/%E8%8C%B6%E7%99%BE%E9%81%93%E5%9B%A2%E8%B4%AD?type=general", "app_url": "douyin://search/%E8%8C%B6%E7%99%BE%E9%81%93%E5%9B%A2%E8%B4%AD?type=general", "is_cheapest": false}, {"platform": "æé³", "platform_label": "æé³", "activity_id": "act_dy_luckin_5", "title": "çå¹¸åå¡æé³å¸ 9.9åä»»é2æ¯", "activity_price": 9.9, "original_price": 60.0, "discount_description": "9.9åä»»é2æ¯ï¼ç¸å½äº4.95å/æ¯", "usage_conditions": "æé³Appä¸åï¼å°åºèªå", "source_url": "https://www.douyin.com/search/%E7%91%9E%E5%B9%B8%E5%92%96%E5%95%A1%E5%9B%A2%E8%B4%AD?type=general", "app_url": "douyin://search/%E7%91%9E%E5%B9%B8%E5%92%96%E5%95%A1%E5%9B%A2%E8%B4%AD?type=general", "is_cheapest": false}, {"platform": "ç¾å¢", "platform_label": "ç¾å¢", "activity_id": "act_mt_milktea_9", "title": "èéªå°åç¾å¢å¸ 9.9å3æ¯", "activity_price": 9.9, "original_price": 18.0, "discount_description": "9.9å3æ¯ï¼ç¸å½äº3.3å/æ¯", "usage_conditions": "ç¾å¢Appä¸å", "source_url": "https://i.meituan.com/s/%E8%9C%9C%E9%9B%AA%E5%86%B0%E5%9F%8E/", "app_url": "imeituan://www.meituan.com/deal/search?keyword=èéªå°å", "is_cheapest": false}, {"platform": "é¥¿äºä¹", "platform_label": "é¥¿äºä¹", "activity_id": "act_elm_luckin_12", "title": "çå¹¸åå¡é¥¿äºä¹ 12ååæ¯", "activity_price": 12.0, "original_price": 25.0, "discount_description": "12ååæ¯ï¼éå¤åå°å®¶", "usage_conditions": "é¥¿äºä¹Appä¸åï¼å¤åéé", "source_url": "https://h5.ele.me/search?keyword=çå¹¸åå¡", "app_url": "eleme://search?keyword=çå¹¸åå¡", "is_cheapest": false}, {"platform": "ç¾å¢", "platform_label": "ç¾å¢", "activity_id": "act_mt_cotti_12", "title": "åºè¿ªåå¡ç¾å¢å¸ 12å2æ¯", "activity_price": 12.0, "original_price": 36.0, "discount_description": "12å2æ¯ï¼ç¸å½äº6å/æ¯", "usage_conditions": "ç¾å¢Appä¸å", "source_url": "https://i.meituan.com/s/%E5%BA%93%E8%BF%AA%E5%92%96%E5%95%A1/", "app_url": "imeituan://www.meituan.com/deal/search?keyword=åºè¿ªåå¡", "is_cheapest": false}, {"platform": "æé³", "platform_label": "æé³", "activity_id": "act_dy_wallace_12", "title": "åè±å£«æé³å¸ 12åç¸é¸¡å¥é¤", "activity_price": 12.0, "original_price": 25.0, "discount_description": "12åç¸é¸¡å¥é¤ï¼ç13å", "usage_conditions": "æé³Appä¸å", "source_url": "https://www.douyin.com/search/%E5%8D%8E%E8%8E%B1%E5%A3%AB%E5%9B%A2%E8%B4%AD?type=general", "app_url": "douyin://search/%E5%8D%8E%E8%8E%B1%E5%A3%AB%E5%9B%A2%E8%B4%AD?type=general", "is_cheapest": false}, {"platform": "ç¾å¢", "platform_label": "ç¾å¢", "activity_id": "act_mt_luckin_15", "title": "çå¹¸åå¡ç¾å¢å¸ 15å3æ¯", "activity_price": 15.0, "original_price": 60.0, "discount_description": "15å3æ¯ï¼ç¸å½äº5å/æ¯", "usage_conditions": "ç¾å¢Appä¸åï¼å°åºèªå", "source_url": "https://i.meituan.com/s/%E7%91%9E%E5%B9%B8%E5%92%96%E5%95%A1/", "app_url": "imeituan://www.meituan.com/deal/search?keyword=çå¹¸åå¡", "is_cheapest": false}, {"platform": "æé³", "platform_label": "æé³", "activity_id": "act_dy_bawang_15", "title": "é¸çè¶å§¬æé³å¸ 15ååæ¯", "activity_price": 15.0, "original_price": 25.0, "discount_description": "15ååæ¯ï¼ç10å", "usage_conditions": "æé³Appä¸å", "source_url": "https://www.douyin.com/search/%E9%9C%B8%E7%8E%8B%E8%8C%B6%E5%A7%AC%E5%9B%A2%E8%B4%AD?type=general", "app_url": "douyin://search/%E9%9C%B8%E7%8E%8B%E8%8C%B6%E5%A7%AC%E5%9B%A2%E8%B4%AD?type=general", "is_cheapest": false}, {"platform": "ç¾å¢", "platform_label": "ç¾å¢", "activity_id": "act_mt_chabaidao_15", "title": "è¶ç¾éç¾å¢å¸ 15å2æ¯", "activity_price": 15.0, "original_price": 36.0, "discount_description": "15å2æ¯ï¼ç¸å½äº7.5å/æ¯", "usage_conditions": "ç¾å¢Appä¸å", "source_url": "https://i.meituan.com/s/%E8%8C%B6%E7%99%BE%E9%81%93/", "app_url": "imeituan://www.meituan.com/deal/search?keyword=è¶ç¾é", "is_cheapest": false}, {"platform": "æé³", "platform_label": "æé³", "activity_id": "act_dy_tastin_15", "title": "å¡æ¯æ±æé³å¸ 15åæ±å ¡å¥é¤", "activity_price": 15.0, "original_price": 29.0, "discount_description": "15åæ±å ¡å¥é¤ï¼ç14å", "usage_conditions": "æé³Appä¸å", "source_url": "https://www.douyin.com/search/%E5%A1%94%E6%96%AF%E6%B1%80%E5%9B%A2%E8%B4%AD?type=general", "app_url": "douyin://search/%E5%A1%94%E6%96%AF%E6%B1%80%E5%9B%A2%E8%B4%AD?type=general", "is_cheapest": false}, {"platform": "æé³", "platform_label": "æé³", "activity_id": "act_dy_manner_15", "title": "Manneræé³å¸ 15ååæ¯", "activity_price": 15.0, "original_price": 20.0, "discount_description": "15ååæ¯ï¼èªå¸¦æ¯åå5å", "usage_conditions": "æé³Appä¸å", "source_url": "https://www.douyin.com/search/Manner%E5%92%96%E5%95%A1%E5%9B%A2%E8%B4%AD?type=general", "app_url": "douyin://search/Manner%E5%92%96%E5%95%A1%E5%9B%A2%E8%B4%AD?type=general", "is_cheapest": false}, {"platform": "ç¾å¢", "platform_label": "ç¾å¢", "activity_id": "act_mt_bianlifeng_15", "title": "ä¾¿å©èç¾å¢å¸ æ»¡20å5", "activity_price": 15.0, "original_price": 20.0, "discount_description": "æ»¡20å5ï¼ç¸å½äº75æ", "usage_conditions": "ç¾å¢å¤åä¾¿å©èä¸å", "source_url": "https://i.meituan.com/s/%E4%BE%BF%E5%88%A9%E8%9C%82/", "app_url": "imeituan://www.meituan.com/deal/search?keyword=ä¾¿å©è", "is_cheapest": false}, {"platform": "é¥¿äºä¹", "platform_label": "é¥¿äºä¹", "activity_id": "act_elm_bianlifeng_10", "title": "ä¾¿å©èé¥¿äºä¹ æ»¡18å3", "activity_price": 15.0, "original_price": 18.0, "discount_description": "æ»¡18å3ï¼ä¾¿å©åºå³ä¹°å³é", "usage_conditions": "é¥¿äºä¹ä¸å", "source_url": "https://h5.ele.me/search?keyword=ä¾¿å©è", "app_url": "eleme://search?keyword=ä¾¿å©è", "is_cheapest": false}, {"platform": "æé³", "platform_label": "æé³", "activity_id": "act_dy_nayuki_15", "title": "å¥éªçè¶æé³å¸ 15.9ååæ¯", "activity_price": 15.9, "original_price": 28.0, "discount_description": "15.9ååæ¯ï¼ç12å", "usage_conditions": "æé³Appä¸å", "source_url": "https://www.douyin.com/search/%E5%A5%88%E9%9B%AA%E7%9A%84%E8%8C%B6%E5%9B%A2%E8%B4%AD?type=general", "app_url": "douyin://search/%E5%A5%88%E9%9B%AA%E7%9A%84%E8%8C%B6%E5%9B%A2%E8%B4%AD?type=general", "is_cheapest": false}, {"platform": "æé³", "platform_label": "æé³", "activity_id": "act_dy_moreyogurt_15", "title": "èé¸å¥¶æé³å¸ 15.9åçæ²¹æé¸å¥¶å¥¶æ", "activity_price": 15.9, "original_price": 26.0, "discount_description": "15.9åæççæ²¹æï¼ç10å", "usage_conditions": "æé³Appä¸åï¼å°åºèªå", "source_url": "https://www.douyin.com/search/%E8%8C%89%E9%85%B8%E5%A5%B6%E5%9B%A2%E8%B4%AD?type=general", "app_url": "douyin://search/%E8%8C%89%E9%85%B8%E5%A5%B6%E5%9B%A2%E8%B4%AD?type=general", "is_cheapest": false}, {"platform": "æé³", "platform_label": "æé³", "activity_id": "act_dy_modern_tea_16", "title": "è¶é¢æ¦è²æé³å¸ 16ååæ¯", "activity_price": 16.0, "original_price": 22.0, "discount_description": "16ååæ¯ï¼ç6å", "usage_conditions": "æé³Appä¸åï¼é¿æ²/æ­¦æ±/åäº¬é¨åº", "source_url": "https://www.douyin.com/search/%E8%8C%B6%E9%A2%9C%E6%82%A6%E8%89%B2%E5%9B%A2%E8%B4%AD?type=general", "app_url": "douyin://search/%E8%8C%B6%E9%A2%9C%E6%82%A6%E8%89%B2%E5%9B%A2%E8%B4%AD?type=general", "is_cheapest": false}, {"platform": "æ¯ä»å®", "platform_label": "æ¯ä»å®", "activity_id": "act_al_heytea_18", "title": "åè¶æ¯ä»å® 18ååæ¯", "activity_price": 18.0, "original_price": 30.0, "discount_description": "18ååæ¯ï¼æ¯ä»å®ä¸äº«", "usage_conditions": "æ¯ä»å®åè¶å°ç¨åº", "source_url": "https://render.alipay.com/p/s/heytea", "app_url": "alipays://platformapi/startapp?appId=20001&page=pages/home/index&query=merchant%3Dheytea", "is_cheapest": false}, {"platform": "ç¾å¢", "platform_label": "ç¾å¢", "activity_id": "act_mt_hutouju_18", "title": "èå¤´å±ç¾å¢å¸ 18åç¹å¿å¥é¤", "activity_price": 18.0, "original_price": 35.0, "discount_description": "18åç¹å¿å¥é¤ï¼ç17å", "usage_conditions": "ç¾å¢Appä¸å", "source_url": "https://i.meituan.com/s/%E8%99%8E%E5%A4%B4%E5%B1%80/", "app_url": "imeituan://www.meituan.com/deal/search?keyword=èå¤´å±", "is_cheapest": false}, {"platform": "æé³", "platform_label": "æé³", "activity_id": "act_dy_ygf_18", "title": "æ¨å½ç¦æé³å¸ 18.8ååäººå¥é¤", "activity_price": 18.8, "original_price": 29.0, "discount_description": "18.8ååäººå¥é¤ï¼ç10.2å", "usage_conditions": "æé³Appä¸å", "source_url": "https://www.douyin.com/search/%E6%9D%A8%E5%9B%BD%E7%A6%8F%E5%9B%A2%E8%B4%AD?type=general", "app_url": "douyin://search/%E6%9D%A8%E5%9B%BD%E7%A6%8F%E5%9B%A2%E8%B4%AD?type=general", "is_cheapest": false}, {"platform": "æ¯ä»å®", "platform_label": "æ¯ä»å®", "activity_id": "act_al_luckin_19", "title": "çå¹¸åå¡æ¯ä»å®ä¼æ å¸ 19å2æ¯", "activity_price": 19.0, "original_price": 50.0, "discount_description": "19å2æ¯ï¼ç¸å½äº9.5å/æ¯", "usage_conditions": "æ¯ä»å®å°ç¨åºä¸å", "source_url": "https://render.alipay.com/p/s/luckin", "app_url": "alipays://platformapi/startapp?appId=20001&page=pages/home/index&query=merchant%3Dluckin", "is_cheapest": false}, {"platform": "æé³", "platform_label": "æé³", "activity_id": "act_dy_starbucks_bogo", "title": "æå·´åæé³å¸ å¨ä¸ä¹°ä¸èµ ä¸", "activity_price": 19.0, "original_price": 38.0, "discount_description": "å¨ä¸ä¹°ä¸èµ ä¸ï¼ç¸å½äºåä»·", "usage_conditions": "ä»éå¨ä¸ï¼æå®é¥®å", "source_url": "https://www.douyin.com/search/%E6%98%9F%E5%B7%B4%E5%85%8B%E5%9B%A2%E8%B4%AD?type=general", "app_url": "douyin://search/%E6%98%9F%E5%B7%B4%E5%85%8B%E5%9B%A2%E8%B4%AD?type=general", "is_cheapest": false}, {"platform": "æé³", "platform_label": "æé³", "activity_id": "act_dy_kfc_19", "title": "è¯å¾·åºæé³å¸ 19.9åç¯çææå", "activity_price": 19.9, "original_price": 49.9, "discount_description": "19.9åç¯çææåï¼ç30å", "usage_conditions": "ä»éå¨åï¼æé³Appä¸å", "source_url": "https://www.douyin.com/search/%E8%82%AF%E5%BE%B7%E5%9F%BA%E5%9B%A2%E8%B4%AD?type=general", "app_url": "douyin://search/%E8%82%AF%E5%BE%B7%E5%9F%BA%E5%9B%A2%E8%B4%AD?type=general", "is_cheapest": false}, {"platform": "æé³", "platform_label": "æé³", "activity_id": "act_dy_heytea_19", "title": "åè¶æé³å¸ 19.9åä»»é1æ¯", "activity_price": 19.9, "original_price": 30.0, "discount_description": "19.9åä»»é1æ¯ï¼ç10å", "usage_conditions": "æé³Appä¸å", "source_url": "https://www.douyin.com/search/%E5%96%9C%E8%8C%B6%E5%9B%A2%E8%B4%AD?type=general", "app_url": "douyin://search/%E5%96%9C%E8%8C%B6%E5%9B%A2%E8%B4%AD?type=general", "is_cheapest": false}, {"platform": "ç¾å¢", "platform_label": "ç¾å¢", "activity_id": "act_mt_nayuki_20", "title": "å¥éªçè¶ç¾å¢å¸ 20å2æ¯", "activity_price": 20.0, "original_price": 56.0, "discount_description": "20å2æ¯ï¼ç¸å½äº10å/æ¯", "usage_conditions": "ç¾å¢Appä¸å", "source_url": "https://i.meituan.com/s/%E5%A5%88%E9%9B%AA%E7%9A%84%E8%8C%B6/", "app_url": "imeituan://www.meituan.com/deal/search?keyword=å¥éªçè¶", "is_cheapest": false}, {"platform": "ç¾å¢", "platform_label": "ç¾å¢", "activity_id": "act_mt_kfc_22", "title": "è¯å¾·åºç¾å¢å¸ 22ååäººå¥é¤", "activity_price": 22.0, "original_price": 35.0, "discount_description": "22ååäººå¥é¤ï¼ç13å", "usage_conditions": "ç¾å¢Appä¸å", "source_url": "https://i.meituan.com/s/%E8%82%AF%E5%BE%B7%E5%9F%BA/", "app_url": "imeituan://www.meituan.com/deal/search?keyword=è¯å¾·åº", "is_cheapest": false}, {"platform": "ç¾å¢", "platform_label": "ç¾å¢", "activity_id": "act_mt_tastin_22", "title": "å¡æ¯æ±ç¾å¢å¸ 22ååäººå¥é¤", "activity_price": 22.0, "original_price": 45.0, "discount_description": "22ååäººå¥é¤ï¼ç23å", "usage_conditions": "ç¾å¢Appä¸å", "source_url": "https://i.meituan.com/s/%E5%A1%94%E6%96%AF%E6%B1%80/", "app_url": "imeituan://www.meituan.com/deal/search?keyword=å¡æ¯æ±", "is_cheapest": false}, {"platform": "æ¯ä»å®", "platform_label": "æ¯ä»å®", "activity_id": "act_al_starbucks_25", "title": "æå·´åæ¯ä»å® 25ååæ¯", "activity_price": 25.0, "original_price": 38.0, "discount_description": "25ååæ¯ï¼ç13å", "usage_conditions": "æ¯ä»å®æå·´åå°ç¨åº", "source_url": "https://render.alipay.com/p/s/starbucks", "app_url": "alipays://platformapi/startapp?appId=20001&page=pages/home/index&query=merchant%3Dstarbucks", "is_cheapest": false}, {"platform": "ç¾å¢", "platform_label": "ç¾å¢", "activity_id": "act_mt_mcd_25", "title": "éº¦å½å³ç¾å¢å¸ 25ååäººå¥é¤", "activity_price": 25.0, "original_price": 39.0, "discount_description": "25ååäººå¥é¤ï¼ç14å", "usage_conditions": "ç¾å¢Appä¸å", "source_url": "https://i.meituan.com/s/%E9%BA%A6%E5%BD%93%E5%8A%B3/", "app_url": "imeituan://www.meituan.com/deal/search?keyword=éº¦å½å³", "is_cheapest": false}, {"platform": "ç¾å¢", "platform_label": "ç¾å¢", "activity_id": "act_mt_heytea_25", "title": "åè¶ç¾å¢å¸ 25å2æ¯", "activity_price": 25.0, "original_price": 60.0, "discount_description": "25å2æ¯ï¼ç¸å½äº12.5å/æ¯", "usage_conditions": "ç¾å¢Appä¸åï¼å°åºèªå", "source_url": "https://i.meituan.com/s/%E5%96%9C%E8%8C%B6/", "app_url": "imeituan://www.meituan.com/deal/search?keyword=åè¶", "is_cheapest": false}, {"platform": "ç¾å¢", "platform_label": "ç¾å¢", "activity_id": "act_mt_manner_25", "title": "Mannerç¾å¢å¸ 25å2æ¯", "activity_price": 25.0, "original_price": 40.0, "discount_description": "25å2æ¯ï¼ç¸å½äº12.5å/æ¯", "usage_conditions": "ç¾å¢Appä¸å", "source_url": "https://i.meituan.com/s/Manner/", "app_url": "imeituan://www.meituan.com/deal/search?keyword=Manner", "is_cheapest": false}, {"platform": "ç¾å¢", "platform_label": "ç¾å¢", "activity_id": "act_mt_ygf_25", "title": "æ¨å½ç¦ç¾å¢å¸ 25å2äººåäº«é¤", "activity_price": 25.0, "original_price": 45.0, "discount_description": "25ååäººåäº«ï¼ç20å", "usage_conditions": "ç¾å¢Appä¸å", "source_url": "https://i.meituan.com/s/%E6%9D%A8%E5%9B%BD%E7%A6%8F/", "app_url": "imeituan://www.meituan.com/deal/search?keyword=æ¨å½ç¦", "is_cheapest": false}, {"platform": "ç¾å¢", "platform_label": "ç¾å¢", "activity_id": "act_mt_moreyogurt_26", "title": "èé¸å¥¶ç¾å¢å¸ 26å2æ¯", "activity_price": 26.0, "original_price": 52.0, "discount_description": "26å2æ¯ï¼ç¸å½äº13å/æ¯", "usage_conditions": "ç¾å¢Appä¸å", "source_url": "https://i.meituan.com/s/%E8%8C%89%E9%85%B8%E5%A5%B6/", "app_url": "imeituan://www.meituan.com/deal/search?keyword=èé¸å¥¶", "is_cheapest": false}, {"platform": "æé³", "platform_label": "æé³", "activity_id": "act_dy_burger_28", "title": "æ±å ¡çæé³å¸ 28åçå ¡å¥é¤", "activity_price": 28.0, "original_price": 49.0, "discount_description": "28åçå ¡åäººå¥é¤", "usage_conditions": "æé³Appä¸å", "source_url": "https://www.douyin.com/search/%E6%B1%89%E5%A0%A1%E7%8E%8B%E5%9B%A2%E8%B4%AD?type=general", "app_url": "douyin://search/%E6%B1%89%E5%A0%A1%E7%8E%8B%E5%9B%A2%E8%B4%AD?type=general", "is_cheapest": false}, {"platform": "ç¾å¢", "platform_label": "ç¾å¢", "activity_id": "act_mt_bawang_28", "title": "é¸çè¶å§¬ç¾å¢å¸ 28å2æ¯", "activity_price": 28.0, "original_price": 50.0, "discount_description": "28å2æ¯ï¼ç¸å½äº14å/æ¯", "usage_conditions": "ç¾å¢Appä¸å", "source_url": "https://i.meituan.com/s/%E9%9C%B8%E7%8E%8B%E8%8C%B6%E5%A7%AC/", "app_url": "imeituan://www.meituan.com/deal/search?keyword=é¸çè¶å§¬", "is_cheapest": false}, {"platform": "ç¾å¢", "platform_label": "ç¾å¢", "activity_id": "act_mt_domino_28", "title": "è¾¾ç¾ä¹ç¾å¢å¸ 28ååäººæ«è¨å¥é¤", "activity_price": 28.0, "original_price": 55.0, "discount_description": "28ååäººå¥é¤ï¼ç27å", "usage_conditions": "ç¾å¢Appä¸å", "source_url": "https://i.meituan.com/s/%E8%BE%BE%E7%BE%8E%E4%B9%90/", "app_url": "imeituan://www.meituan.com/deal/search?keyword=è¾¾ç¾ä¹", "is_cheapest": false}, {"platform": "ç¾å¢", "platform_label": "ç¾å¢", "activity_id": "act_mt_modern_tea_28", "title": "è¶é¢æ¦è²ç¾å¢å¸ 28å2æ¯", "activity_price": 28.0, "original_price": 44.0, "discount_description": "28å2æ¯ï¼ç¸å½äº14å/æ¯", "usage_conditions": "ç¾å¢Appä¸å", "source_url": "https://i.meituan.com/s/%E8%8C%B6%E9%A2%9C%E6%82%A6%E8%89%B2/", "app_url": "imeituan://www.meituan.com/deal/search?keyword=è¶é¢æ¦è²", "is_cheapest": false}, {"platform": "æé³", "platform_label": "æé³", "activity_id": "act_dy_mcd_29", "title": "éº¦å½å³æé³å¸ 29ååäººå¥é¤", "activity_price": 29.0, "original_price": 59.0, "discount_description": "29ååäººå¥é¤ï¼ç30å", "usage_conditions": "æé³Appä¸åï¼å°åºèªå", "source_url": "https://www.douyin.com/search/%E9%BA%A6%E5%BD%93%E5%8A%B3%E5%9B%A2%E8%B4%AD?type=general", "app_url": "douyin://search/%E9%BA%A6%E5%BD%93%E5%8A%B3%E5%9B%A2%E8%B4%AD?type=general", "is_cheapest": false}, {"platform": "é¥¿äºä¹", "platform_label": "é¥¿äºä¹", "activity_id": "act_elm_kfc_29", "title": "è¯å¾·åºé¥¿äºä¹ 29ååäººé¤", "activity_price": 29.0, "original_price": 59.0, "discount_description": "29ååäººå¤åå¥é¤", "usage_conditions": "é¥¿äºä¹ä¸åï¼å¤åéé", "source_url": "https://h5.ele.me/search?keyword=è¯å¾·åº", "app_url": "eleme://search?keyword=è¯å¾·åº", "is_cheapest": false}, {"platform": "ç¾å¢", "platform_label": "ç¾å¢", "activity_id": "act_mt_burger_35", "title": "æ±å ¡çç¾å¢å¸ 35ååäººå¥é¤", "activity_price": 35.0, "original_price": 69.0, "discount_description": "35ååäººå¥é¤ï¼ç34å", "usage_conditions": "ç¾å¢Appä¸å", "source_url": "https://i.meituan.com/s/%E6%B1%89%E5%A0%A1%E7%8E%8B/", "app_url": "imeituan://www.meituan.com/deal/search?keyword=æ±å ¡ç", "is_cheapest": false}, {"platform": "ç¾å¢", "platform_label": "ç¾å¢", "activity_id": "act_mt_wallace_35", "title": "åè±å£«ç¾å¢å¸ 35åå¨å®¶æ¡¶", "activity_price": 35.0, "original_price": 69.0, "discount_description": "35åå¨å®¶æ¡¶ï¼ç34å", "usage_conditions": "ç¾å¢Appä¸å", "source_url": "https://i.meituan.com/s/%E5%8D%8E%E8%8E%B1%E5%A3%AB/", "app_url": "imeituan://www.meituan.com/deal/search?keyword=åè±å£«", "is_cheapest": false}, {"platform": "ç¾å¢", "platform_label": "ç¾å¢", "activity_id": "act_mt_starbucks_39", "title": "æå·´åç¾å¢å¸ 39å2æ¯ä»»é", "activity_price": 39.0, "original_price": 76.0, "discount_description": "39å2æ¯ä»»éï¼ç37å", "usage_conditions": "ç¾å¢Appä¸åï¼å°åºèªå", "source_url": "https://i.meituan.com/s/%E6%98%9F%E5%B7%B4%E5%85%8B/", "app_url": "imeituan://www.meituan.com/deal/search?keyword=æå·´å", "is_cheapest": false}, {"platform": "æ¯ä»å®", "platform_label": "æ¯ä»å®", "activity_id": "act_al_mcd_39", "title": "éº¦å½å³æ¯ä»å® 39åå¨å®¶æ¡¶", "activity_price": 39.0, "original_price": 79.0, "discount_description": "39åå¨å®¶æ¡¶ï¼ç40å", "usage_conditions": "æ¯ä»å®éº¦å½å³å°ç¨åº", "source_url": "https://render.alipay.com/p/s/mcdonalds", "app_url": "alipays://platformapi/startapp?appId=20001&page=pages/home/index&query=merchant%3Dmcdonalds", "is_cheapest": false}, {"platform": "æé³", "platform_label": "æé³", "activity_id": "act_dy_domino_39", "title": "è¾¾ç¾ä¹æé³å¸ 39å9å¯¸æ«è¨", "activity_price": 39.0, "original_price": 69.0, "discount_description": "39å9å¯¸æ«è¨ï¼ç30å", "usage_conditions": "æé³Appä¸å", "source_url": "https://www.douyin.com/search/%E8%BE%BE%E7%BE%8E%E4%B9%90%E5%9B%A2%E8%B4%AD?type=general", "app_url": "douyin://search/%E8%BE%BE%E7%BE%8E%E4%B9%90%E5%9B%A2%E8%B4%AD?type=general", "is_cheapest": false}, {"platform": "é¥¿äºä¹", "platform_label": "é¥¿äºä¹", "activity_id": "act_elm_starbucks_42", "title": "æå·´åé¥¿äºä¹ 42ååæ¯å¤å", "activity_price": 42.0, "original_price": 76.0, "discount_description": "42ååæ¯å¤åå°å®¶", "usage_conditions": "é¥¿äºä¹ä¸åï¼å¤åéé", "source_url": "https://h5.ele.me/search?keyword=æå·´å", "app_url": "eleme://search?keyword=æå·´å", "is_cheapest": false}, {"platform": "æé³", "platform_label": "æé³", "activity_id": "act_dy_pizzahut_49", "title": "å¿èå®¢æé³å¸ 49ååäººå¥é¤", "activity_price": 49.0, "original_price": 89.0, "discount_description": "49ååäººå¥é¤ï¼ç40å", "usage_conditions": "æé³Appä¸å", "source_url": "https://www.douyin.com/search/%E5%BF%85%E8%83%9C%E5%AE%A2%E5%9B%A2%E8%B4%AD?type=general", "app_url": "douyin://search/%E5%BF%85%E8%83%9C%E5%AE%A2%E5%9B%A2%E8%B4%AD?type=general", "is_cheapest": false}, {"platform": "äº¬ä¸", "platform_label": "äº¬ä¸", "activity_id": "act_jd_coffee_49", "title": "äº¬ä¸çå¹¸ 49.9å10æ¯å¡", "activity_price": 49.9, "original_price": 150.0, "discount_description": "49.9å10æ¯å¡ï¼ç¸å½äº5å/æ¯", "usage_conditions": "äº¬ä¸ä¸åï¼30å¤©ææ", "source_url": "https://m.jd.com/search?keyword=çå¹¸åå¡", "app_url": "openApp.jdMobile://virtual?params={%22category%22:%22jump%22,%22des%22:%22m%22,%22url%22:%22https://m.jd.com/search?keyword=çå¹¸åå¡%22}", "is_cheapest": false}, {"platform": "ç¾å¢", "platform_label": "ç¾å¢", "activity_id": "act_mt_pizzahut_59", "title": "å¿èå®¢ç¾å¢å¸ 59ååäººæ«è¨å¥é¤", "activity_price": 59.0, "original_price": 119.0, "discount_description": "59ååäººæ«è¨å¥é¤ï¼åä»·", "usage_conditions": "ç¾å¢Appä¸å", "source_url": "https://i.meituan.com/s/%E5%BF%85%E8%83%9C%E5%AE%A2/", "app_url": "imeituan://www.meituan.com/deal/search?keyword=å¿èå®¢", "is_cheapest": false}, {"platform": "æé³", "platform_label": "æé³", "activity_id": "act_dy_xiabu_59", "title": "å·åºå·åºæé³å¸ 59ååäººç«é", "activity_price": 59.0, "original_price": 89.0, "discount_description": "59ååäººç«éï¼ç30å", "usage_conditions": "æé³Appä¸å", "source_url": "https://www.douyin.com/search/%E5%91%B7%E5%93%BA%E5%91%B7%E5%93%BA%E5%9B%A2%E8%B4%AD?type=general", "app_url": "douyin://search/%E5%91%B7%E5%93%BA%E5%91%B7%E5%93%BA%E5%9B%A2%E8%B4%AD?type=general", "is_cheapest": false}, {"platform": "ç¾å¢", "platform_label": "ç¾å¢", "activity_id": "act_mt_tongcheng_59", "title": "åç¨æè¡ç¾å¢å¸ 59åéåºå¸", "activity_price": 59.0, "original_price": 159.0, "discount_description": "59åéåºå¸ï¼å¯åæ¢å¿«æ·éåº", "usage_conditions": "ç¾å¢Appä¸åï¼åç¨åæ¢", "source_url": "https://i.meituan.com/s/%E5%90%8C%E7%A8%8B%E6%97%85%E8%A1%8C/", "app_url": "imeituan://www.meituan.com/deal/search?keyword=åç¨æè¡", "is_cheapest": false}, {"platform": "æé³", "platform_label": "æé³", "activity_id": "act_dy_xibei_68", "title": "è¥¿è´æé³å¸ 68ååäººå¥é¤", "activity_price": 68.0, "original_price": 128.0, "discount_description": "68ååäººå¥é¤ï¼ç60å", "usage_conditions": "æé³Appä¸å", "source_url": "https://www.douyin.com/search/%E8%A5%BF%E8%B4%9D%E5%9B%A2%E8%B4%AD?type=general", "app_url": "douyin://search/%E8%A5%BF%E8%B4%9D%E5%9B%A2%E8%B4%AD?type=general", "is_cheapest": false}, {"platform": "é¥¿äºä¹", "platform_label": "é¥¿äºä¹", "activity_id": "act_elm_freshhema_20", "title": "çé©¬é¥¿äºä¹ é²çæ»¡88å20", "activity_price": 68.0, "original_price": 88.0, "discount_description": "æ»¡88å20ï¼æ°é²ç´è¾¾", "usage_conditions": "é¥¿äºä¹çé©¬ä¸å", "source_url": "https://h5.ele.me/search?keyword=çé©¬é²ç", "app_url": "eleme://search?keyword=çé©¬é²ç", "is_cheapest": false}, {"platform": "ç¾å¢", "platform_label": "ç¾å¢", "activity_id": "act_mt_xiabu_69", "title": "å·åºå·åºç¾å¢å¸ 69ååäººç«é", "activity_price": 69.0, "original_price": 128.0, "discount_description": "69ååäººç«éï¼ç59å", "usage_conditions": "ç¾å¢Appä¸å", "source_url": "https://i.meituan.com/s/%E5%91%B7%E5%93%BA%E5%91%B7%E5%93%BA/", "app_url": "imeituan://www.meituan.com/deal/search?keyword=å·åºå·åº", "is_cheapest": false}, {"platform": "é¥¿äºä¹", "platform_label": "é¥¿äºä¹", "activity_id": "act_elm_rtmart_15", "title": "å¤§æ¶¦åé¥¿äºä¹ æ»¡88å15", "activity_price": 73.0, "original_price": 88.0, "discount_description": "æ»¡88å15ï¼æ°é²è¬èæ°´æ", "usage_conditions": "é¥¿äºä¹å¤§æ¶¦åä¸å", "source_url": "https://h5.ele.me/search?keyword=å¤§æ¶¦å", "app_url": "eleme://search?keyword=å¤§æ¶¦å", "is_cheapest": false}, {"platform": "ç¾å¢", "platform_label": "ç¾å¢", "activity_id": "act_mt_watsons_15", "title": "å±è£æ°ç¾å¢å¸ æ»¡99å15", "activity_price": 84.0, "original_price": 99.0, "discount_description": "æ»¡99å15ï¼æ¥ç¨åå¤è´§", "usage_conditions": "ç¾å¢éªè´­å±è£æ°ä¸å", "source_url": "https://i.meituan.com/s/%E5%B1%88%E8%87%A3%E6%B0%8F/", "app_url": "imeituan://www.meituan.com/deal/search?keyword=å±è£æ°", "is_cheapest": false}, {"platform": "ç¾å¢", "platform_label": "ç¾å¢", "activity_id": "act_mt_walmart_15", "title": "æ²å°çç¾å¢å¸ æ»¡100å15", "activity_price": 85.0, "original_price": 100.0, "discount_description": "æ»¡100å15ï¼ç¸å½äº85æ", "usage_conditions": "ç¾å¢éªè´­ä¸å", "source_url": "https://i.meituan.com/s/%E6%B2%83%E5%B0%94%E7%8E%9B/", "app_url": "imeituan://www.meituan.com/deal/search?keyword=æ²å°ç", "is_cheapest": false}, {"platform": "æ·å®", "platform_label": "æ·å®", "activity_id": "act_tb_luckin_88", "title": "çå¹¸åå¡æ·å® 88åæå¡", "activity_price": 88.0, "original_price": 300.0, "discount_description": "88åæå¡ï¼30æ¯â2.9å/æ¯", "usage_conditions": "æ·å®ä¸åï¼30å¤©ææ", "source_url": "https://m.taobao.com/search?q=çå¹¸åå¡æå¡", "app_url": "taobao://m.taobao.com/search?q=çå¹¸åå¡æå¡", "is_cheapest": false}, {"platform": "æé³", "platform_label": "æé³", "activity_id": "act_dy_haidilao_88", "title": "æµ·åºææé³å¸ 88åå·¥ä½æ¥åå¸", "activity_price": 88.0, "original_price": 150.0, "discount_description": "88åå·¥ä½æ¥åå¸ï¼ç62å", "usage_conditions": "å·¥ä½æ¥åå¸ï¼æé³Appä¸å", "source_url": "https://www.douyin.com/search/%E6%B5%B7%E5%BA%95%E6%8D%9E%E5%9B%A2%E8%B4%AD?type=general", "app_url": "douyin://search/%E6%B5%B7%E5%BA%95%E6%8D%9E%E5%9B%A2%E8%B4%AD?type=general", "is_cheapest": false}, {"platform": "ç¾å¢", "platform_label": "ç¾å¢", "activity_id": "act_mt_xibei_88", "title": "è¥¿è´ç¾å¢å¸ 88åå®¶åº­å¥é¤", "activity_price": 88.0, "original_price": 188.0, "discount_description": "88åå®¶åº­å¥é¤ï¼ç100å", "usage_conditions": "ç¾å¢Appä¸å", "source_url": "https://i.meituan.com/s/%E8%A5%BF%E8%B4%9D/", "app_url": "imeituan://www.meituan.com/deal/search?keyword=è¥¿è´", "is_cheapest": false}, {"platform": "æé³", "platform_label": "æé³", "activity_id": "act_dy_watsons_88", "title": "å±è£æ°æé³å¸ 88åæ¤è¤å¥è£", "activity_price": 88.0, "original_price": 188.0, "discount_description": "88åæ¤è¤å¥è£ï¼ç100å", "usage_conditions": "æé³Appä¸åï¼å°åºèªå", "source_url": "https://www.douyin.com/search/%E5%B1%88%E8%87%A3%E6%B0%8F%E5%9B%A2%E8%B4%AD?type=general", "app_url": "douyin://search/%E5%B1%88%E8%87%A3%E6%B0%8F%E5%9B%A2%E8%B4%AD?type=general", "is_cheapest": false}, {"platform": "ç¾å¢", "platform_label": "ç¾å¢", "activity_id": "act_mt_haidilao_99", "title": "æµ·åºæç¾å¢å¸ 99ååäººå¥é¤", "activity_price": 99.0, "original_price": 180.0, "discount_description": "99ååäººå¥é¤ï¼ç81å", "usage_conditions": "ç¾å¢Appä¸åï¼å°åºæ ¸é", "source_url": "https://i.meituan.com/s/%E6%B5%B7%E5%BA%95%E6%8D%9E/", "app_url": "imeituan://www.meituan.com/deal/search?keyword=æµ·åºæ", "is_cheapest": false}, {"platform": "æé³", "platform_label": "æé³", "activity_id": "act_dy_tongcheng_99", "title": "åç¨æè¡æé³å¸ 99åæºç¥¨ç²ç", "activity_price": 99.0, "original_price": 500.0, "discount_description": "99åæºç¥¨ç²çï¼éæºç®çå°", "usage_conditions": "æé³Appä¸åï¼åç¨Appåæ¢", "source_url": "https://www.douyin.com/search/%E5%90%8C%E7%A8%8B%E6%97%85%E8%A1%8C%E5%9B%A2%E8%B4%AD?type=general", "app_url": "douyin://search/%E5%90%8C%E7%A8%8B%E6%97%85%E8%A1%8C%E5%9B%A2%E8%B4%AD?type=general", "is_cheapest": false}, {"platform": "æ¯ä»å®", "platform_label": "æ¯ä»å®", "activity_id": "act_al_haidilao_108", "title": "æµ·åºææ¯ä»å® 108ååäººå¥é¤", "activity_price": 108.0, "original_price": 180.0, "discount_description": "108ååäººå¥é¤ï¼ç72å", "usage_conditions": "æ¯ä»å®æµ·åºæå°ç¨åº", "source_url": "https://render.alipay.com/p/s/haidilao", "app_url": "alipays://platformapi/startapp?appId=20001&page=pages/home/index&query=merchant%3Dhaidilao", "is_cheapest": false}, {"platform": "ç¾å¢", "platform_label": "ç¾å¢", "activity_id": "act_mt_rtmart_20", "title": "å¤§æ¶¦åç¾å¢å¸ æ»¡129å20", "activity_price": 109.0, "original_price": 129.0, "discount_description": "æ»¡129å20ï¼å¨æ«å¤è´§", "usage_conditions": "ç¾å¢å¤åå¤§æ¶¦åä¸å", "source_url": "https://i.meituan.com/s/%E5%A4%A7%E6%B6%A6%E5%8F%91/", "app_url": "imeituan://www.meituan.com/deal/search?keyword=å¤§æ¶¦å", "is_cheapest": false}, {"platform": "æé³", "platform_label": "æé³", "activity_id": "act_dy_taier_128", "title": "å¤ªäºé¸èé±¼æé³å¸ 128ååäººå¥é¤", "activity_price": 128.0, "original_price": 198.0, "discount_description": "128ååäººå¥é¤ï¼ç70å", "usage_conditions": "æé³Appä¸åï¼å°åºæ ¸é", "source_url": "https://www.douyin.com/search/%E5%A4%AA%E4%BA%8C%E9%85%B8%E8%8F%9C%E9%B1%BC%E5%9B%A2%E8%B4%AD?type=general", "app_url": "douyin://search/%E5%A4%AA%E4%BA%8C%E9%85%B8%E8%8F%9C%E9%B1%BC%E5%9B%A2%E8%B4%AD?type=general", "is_cheapest": false}, {"platform": "ç¾å¢", "platform_label": "ç¾å¢", "activity_id": "act_mt_taier_138", "title": "å¤ªäºé¸èé±¼ç¾å¢å¸ 138å2-3äººå¥é¤", "activity_price": 138.0, "original_price": 228.0, "discount_description": "138å2-3äººå¥é¤ï¼ç90å", "usage_conditions": "ç¾å¢Appä¸åï¼å°åºæ ¸é", "source_url": "https://i.meituan.com/s/%E5%A4%AA%E4%BA%8C/", "app_url": "imeituan://www.meituan.com/deal/search?keyword=å¤ªäº", "is_cheapest": false}, {"platform": "äº¬ä¸", "platform_label": "äº¬ä¸", "activity_id": "act_jd_supermarket_30", "title": "äº¬ä¸è¶å¸ æ»¡199å30", "activity_price": 169.0, "original_price": 199.0, "discount_description": "æ»¡199å30ï¼å¤è´§å¥½æ¶æº", "usage_conditions": "äº¬ä¸Appä¸å", "source_url": "https://m.jd.com/search?keyword=äº¬ä¸è¶å¸æ»¡å", "app_url": "openApp.jdMobile://virtual?params={%22category%22:%22jump%22,%22des%22:%22m%22,%22url%22:%22https://m.jd.com/search?keyword=äº¬ä¸è¶å¸æ»¡å%22}", "is_cheapest": false}, {"platform": "æé³", "platform_label": "æé³", "activity_id": "act_dy_decathlon_99", "title": "è¿ªå¡ä¾¬æé³å¸ æ»¡200å15", "activity_price": 185.0, "original_price": 200.0, "discount_description": "æ»¡200å15ï¼è¿å¨è£å¤ä¼æ ", "usage_conditions": "æé³Appä¸åï¼è¿ªå¡ä¾¬é¨åºèªæ", "source_url": "https://www.douyin.com/search/%E8%BF%AA%E5%8D%A1%E4%BE%AC%E5%9B%A2%E8%B4%AD?type=general", "app_url": "douyin://search/%E8%BF%AA%E5%8D%A1%E4%BE%AC%E5%9B%A2%E8%B4%AD?type=general", "is_cheapest": false}, {"platform": "ç¾å¢", "platform_label": "ç¾å¢", "activity_id": "act_mt_sinopec_10", "title": "ä¸­å½ç³åç¾å¢å¸ æ»¡200å10", "activity_price": 190.0, "original_price": 200.0, "discount_description": "æ»¡200å10ï¼å¨å½ä¸­ç³åå¯ç¨", "usage_conditions": "ç¾å¢ä¸åï¼ææ·å æ²¹App/å°ç¨åº", "source_url": "https://i.meituan.com/s/%E4%B8%AD%E5%9B%BD%E7%9F%B3%E5%8C%96/", "app_url": "imeituan://www.meituan.com/deal/search?keyword=ä¸­å½ç³å", "is_cheapest": false}, {"platform": "ç¾å¢", "platform_label": "ç¾å¢", "activity_id": "act_mt_quanjude_198", "title": "å¨èå¾·ç¾å¢å¸ 198åç¤é¸­åäººå¥é¤", "activity_price": 198.0, "original_price": 398.0, "discount_description": "198åç¤é¸­åäººå¥é¤ï¼ç200å", "usage_conditions": "ç¾å¢Appä¸åï¼æåé¢çº¦", "source_url": "https://i.meituan.com/s/%E5%85%A8%E8%81%9A%E5%BE%B7/", "app_url": "imeituan://www.meituan.com/deal/search?keyword=å¨èå¾·", "is_cheapest": false}, {"platform": "æ·å®", "platform_label": "æ·å®", "activity_id": "act_tb_xiecheng_199", "title": "æºç¨æ·å® 199åéåºå¸å", "activity_price": 199.0, "original_price": 499.0, "discount_description": "199åéåºå¸åï¼å«æ»¡åå¸+åæ¿å¸", "usage_conditions": "æ·å®ä¸åï¼æºç¨Appä½¿ç¨", "source_url": "https://m.taobao.com/search?q=æºç¨éåºå¸", "app_url": "taobao://m.taobao.com/search?q=æºç¨éåºå¸", "is_cheapest": false}, {"platform": "ç¾å¢", "platform_label": "ç¾å¢", "activity_id": "act_mt_ikea_300", "title": "å®å®¶ç¾å¢å¸ æ»¡300å30", "activity_price": 270.0, "original_price": 300.0, "discount_description": "æ»¡300å30ï¼å®¶å±ç¨åä¸ç«è´­", "usage_conditions": "ç¾å¢ä¸åï¼å®å®¶é¨åºèªæ", "source_url": "https://i.meituan.com/s/%E5%AE%9C%E5%AE%B6/", "app_url": "imeituan://www.meituan.com/deal/search?keyword=å®å®¶", "is_cheapest": false}, {"platform": "æ¯ä»å®", "platform_label": "æ¯ä»å®", "activity_id": "act_al_xiecheng_50", "title": "æºç¨æ¯ä»å® æ»¡500å50", "activity_price": 450.0, "original_price": 500.0, "discount_description": "é¢è®¢éåº/æºç¥¨æ»¡500å50", "usage_conditions": "æ¯ä»å®æºç¨å°ç¨åº", "source_url": "https://render.alipay.com/p/s/ctrip", "app_url": "alipays://platformapi/startapp?appId=20001197&page=pages/home/index", "is_cheapest": false}], "stats": {"cards": 56, "banks": 26, "benefits": 101, "redemptions": 34, "by_bank": {"åå¤§é¶è¡": 4, "å´ä¸é¶è¡": 4, "é®å¨é¶è¡": 4, "ä¸­ä¿¡é¶è¡": 3, "ä¸­å½é¶è¡": 3, "åä¸é¶è¡": 3, "å·¥åé¶è¡": 3, "å»ºè®¾é¶è¡": 3, "æåé¶è¡": 3, "äº¤éé¶è¡": 2, "åå¤é¶è¡": 2, "å®æ³¢é¶è¡": 2, "å¹³å®é¶è¡": 2, "å¹¿åé¶è¡": 2, "æ°çé¶è¡": 2, "æ±èé¶è¡": 2, "æµ¦åé¶è¡": 2, "éåºé¶è¡": 2, "ä¸æµ·é¶è¡": 1, "åäº¬é¶è¡": 1, "åäº¬é¶è¡": 1, "å¹¿å·é¶è¡": 1, "æé½é¶è¡": 1, "æ­å·é¶è¡": 1, "æ·±å³ååé¶è¡": 1, "èå·é¶è¡": 1}, "by_level": {"ç»å¸ç": 12, "éå¡": 21, "ç½éå¡": 23}, "by_benefit_type": {"ææ£": 39, "ç§¯åç´¯ç§¯": 20, "è¿ç°": 19, "è´µå®¾å": 9, "èµ ç¤¼": 7, "ä¼åæç": 5, "å¶ä»": 1, "ä¹°ä¸èµ ä¸": 1}}, "cards": [{"bank": "ä¸æµ·é¶è¡", "name": "ä¸æµ·é¶è¡é¶èæ åå¡", "network": "é¶è", "level": "éå¡", "annual_fee": "åå¹´è´¹", "image_url": "https://webcdn.m.qq.com/ccreward/cards/shbank_unionpay.png", "description": "æ±æµæ²ªå°åºåæ·ä¼æ ï¼å¤åæ»¡å", "id": "shbank_unionpay", "is_active": true, "created_at": "2026-08-05T12:36:47", "benefits": [{"title": "æ±æµæ²ªåæ·ä¼æ ", "benefit_type": "ææ£", "category": "é¤é¥®ç¾é£", "description": "æ±æµæ²ªåä½é¤é¥®æ¶è´¹æ»¡å", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": null, "usage_limit": null, "merchant_tags": "ä¸æµ·,æ±æµ,é¤é¥®", "id": "shbank_b1", "card_id": "shbank_unionpay", "is_active": true}, {"title": "å¤åæ»¡å", "benefit_type": "ææ£", "category": "é¤é¥®ç¾é£", "description": "ç¾å¢/é¥¿äºä¹å¤åæ»¡30å8", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": null, "usage_limit": null, "merchant_tags": "å¤å,ç¾å¢,é¥¿äºä¹", "id": "shbank_b2", "card_id": "shbank_unionpay", "is_active": true}]}, {"bank": "ä¸­ä¿¡é¶è¡", "name": "iç½éä¿¡ç¨å¡", "network": "é¶è", "level": "ç½éå¡", "annual_fee": "é¦å¹´åï¼æ¶è´¹12æ¬¡åæ¬¡å¹´", "image_url": "https://webcdn.m.qq.com/ccreward/cards/citic_i_platinum.png", "description": "äºèç½æ¶è´¹è¿ç°ï¼9åäº«æç", "id": "citic_i_platinum", "is_active": true, "created_at": "2026-08-05T12:36:46", "benefits": [{"title": "äºèç½æ¶è´¹è¿ç°", "benefit_type": "è¿ç°", "category": "çº¿ä¸æ¶è´¹", "description": "æå®äºèç½åæ·æ¶è´¹è¿ç°", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": 2.0, "usage_limit": "æ¯æä¸é100å", "merchant_tags": null, "id": "citic_i_b1", "card_id": "citic_i_platinum", "is_active": true}, {"title": "9åäº«æç", "benefit_type": "ææ£", "category": "éç¨", "description": "9ç§¯ååæ¢æå·´åãçå¹¸ç­é¥®å", "value_text": "9ç§¯ååæ¢", "points_per_yuan": null, "discount_percent": null, "cashback_percent": null, "usage_limit": "æ¯æ1æ¬¡", "merchant_tags": null, "id": "citic_i_b2", "card_id": "citic_i_platinum", "is_active": true}]}, {"bank": "ä¸­ä¿¡é¶è¡", "name": "ä¸­ä¿¡é¢å¡", "network": "é¶è", "level": "éå¡", "annual_fee": "åå¹´è´¹", "image_url": "https://webcdn.m.qq.com/ccreward/cards/citic_yan.png", "description": "é«é¢å¼å¡ï¼å¤åæ¶è´¹ç§¯åå å", "id": "citic_yan", "is_active": true, "created_at": "2026-08-05T12:36:46", "benefits": [{"title": "å¤åç§¯åå å", "benefit_type": "ç§¯åç´¯ç§¯", "category": "é¤é¥®ç¾é£", "description": "ç¾å¢/é¥¿äºä¹å¤åæ¶è´¹2åç§¯å", "value_text": null, "points_per_yuan": 2.0, "discount_percent": null, "cashback_percent": null, "usage_limit": null, "merchant_tags": "ç¾å¢,é¥¿äºä¹,å¤å", "id": "citic_yan_b1", "card_id": "citic_yan", "is_active": true}]}, {"bank": "ä¸­ä¿¡é¶è¡", "name": "åä¸ºèåå¡", "network": "é¶è", "level": "ç½éå¡", "annual_fee": "åå¹´è´¹", "image_url": "https://webcdn.m.qq.com/ccreward/cards/citic_huawei.png", "description": "åä¸ºçææ¶è´¹è¿ç°ï¼åä¸ºåå/å¤©ééä¼æ ", "id": "citic_huawei", "is_active": true, "created_at": "2026-08-05T12:36:46", "benefits": [{"title": "åä¸ºååè¿ç°", "benefit_type": "è¿ç°", "category": "çº¿ä¸æ¶è´¹", "description": "åä¸ºååæ¶è´¹è¿2%", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": 2.0, "usage_limit": "æ¯æä¸é100å", "merchant_tags": "åä¸º", "id": "citic_huawei_b1", "card_id": "citic_huawei", "is_active": true}, {"title": "å¤©ééæµéä¼æ ", "benefit_type": "ææ£", "category": "åºè¡ææ¸¸", "description": "å¤©ééå¨çæµé8æ", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": null, "usage_limit": null, "merchant_tags": "åä¸º,åºè¡", "id": "citic_huawei_b2", "card_id": "citic_huawei", "is_active": true}]}, {"bank": "ä¸­å½é¶è¡", "name": "ä¸­é¶åé½å¡", "network": "Mastercard", "level": "ç½éå¡", "annual_fee": "åå¹´è´¹", "image_url": "https://webcdn.m.qq.com/ccreward/cards/boc_zhuoyue.png", "description": "çå­¦çä¸å±ï¼å¢å¤ATMåç°åæç»­è´¹", "id": "boc_zhuoyue", "is_active": true, "created_at": "2026-08-05T12:36:47", "benefits": [{"title": "å¢å¤ATMåç°åæç»­è´¹", "benefit_type": "ææ£", "category": "åºè¡ææ¸¸", "description": "å¢å¤ATMåç°æ¯æå3ç¬åæç»­è´¹", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": null, "usage_limit": null, "merchant_tags": null, "id": "boc_zhuoyue_b1", "card_id": "boc_zhuoyue", "is_active": true}, {"title": "çå­¦ç¼´è´¹ä¼æ ", "benefit_type": "ææ£", "category": "çº¿ä¸æ¶è´¹", "description": "æå®çå­¦ç¼´è´¹å¹³å°æç»­è´¹åå", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": null, "usage_limit": null, "merchant_tags": "çå­¦,æè²", "id": "boc_zhuoyue_b2", "card_id": "boc_zhuoyue", "is_active": true}]}, {"bank": "ä¸­å½é¶è¡", "name": "ä¸­é¶æ°å­ä¿¡ç¨å¡", "network": "é¶è", "level": "ç½éå¡", "annual_fee": "åå¹´è´¹", "image_url": "https://webcdn.m.qq.com/ccreward/cards/boc_digital.png", "description": "æ°å­å¡ï¼ç»å®å¿«æ·æ¯ä»è¿ç°", "id": "boc_digital", "is_active": true, "created_at": "2026-08-05T12:36:47", "benefits": [{"title": "å¿«æ·æ¯ä»è¿ç°", "benefit_type": "è¿ç°", "category": "çº¿ä¸æ¶è´¹", "description": "ç»å®å¿«æ·æ¯ä»æ¶è´¹è¿ç°", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": 1.0, "usage_limit": "æ¯æä¸é50å", "merchant_tags": null, "id": "boc_digital_b1", "card_id": "boc_digital", "is_active": true}]}, {"bank": "ä¸­å½é¶è¡", "name": "é¿åç¯çéä¿¡ç¨å¡", "network": "é¶è", "level": "éå¡", "annual_fee": "é¦å¹´åï¼æ¶è´¹5æ¬¡åæ¬¡å¹´", "image_url": "https://webcdn.m.qq.com/ccreward/cards/boc_greatwall.png", "description": "ä¸­è¡ç»å¸å¡ï¼å¢å¤æ¶è´¹ä¼æ ", "id": "boc_greatwall", "is_active": true, "created_at": "2026-08-05T12:36:47", "benefits": [{"title": "å¢å¤æ¶è´¹ä¼æ ", "benefit_type": "ææ£", "category": "åºè¡ææ¸¸", "description": "å¢å¤æ¶è´¹è¿ç§¯åå å", "value_text": null, "points_per_yuan": 2.0, "discount_percent": null, "cashback_percent": null, "usage_limit": null, "merchant_tags": null, "id": "boc_greatwall_b1", "card_id": "boc_greatwall", "is_active": true}]}, {"bank": "äº¤éé¶è¡", "name": "äº¤é¶Y-powerå¡", "network": "é¶è", "level": "ç»å¸ç", "annual_fee": "åå¹´è´¹", "image_url": "https://webcdn.m.qq.com/ccreward/cards/bocom_ypower.png", "description": "35å²ä»¥ä¸ï¼åç°æç»­è´¹ä¼æ ", "id": "bocom_ypower", "is_active": true, "created_at": "2026-08-05T12:36:47", "benefits": [{"title": "åç°æç»­è´¹ä¼æ ", "benefit_type": "ææ£", "category": "éç¨", "description": "å¢ååç°æ¯ç¬5å", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": null, "usage_limit": "35å²ä»¥ä¸ä¸å±", "merchant_tags": null, "id": "bocom_ypower_b1", "card_id": "bocom_ypower", "is_active": true}]}, {"bank": "äº¤éé¶è¡", "name": "äº¤é¶ç½éºéºå¡", "network": "Mastercard", "level": "ç½éå¡", "annual_fee": "é¦å¹´åï¼æ¶è´¹è¾¾æ åæ¬¡å¹´", "image_url": "https://webcdn.m.qq.com/ccreward/cards/bocom_whitegold.png", "description": "æºåºè´µå®¾å+ç§¯åæ¢éç¨+éåä»£é©¾", "id": "bocom_whitegold", "is_active": true, "created_at": "2026-08-05T12:36:47", "benefits": [{"title": "æºåºè´µå®¾å", "benefit_type": "è´µå®¾å", "category": "åºè¡ææ¸¸", "description": "å¨çæºåºè´µå®¾åæ¯å¹´6æ¬¡", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": null, "usage_limit": null, "merchant_tags": null, "id": "bocom_whitegold_b1", "card_id": "bocom_whitegold", "is_active": true}, {"title": "ç§¯åæ¢éç¨", "benefit_type": "ç§¯åç´¯ç§¯", "category": "åºè¡ææ¸¸", "description": "18ç§¯åå1éç¨ï¼ä¸å¤§èªéç¨", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": null, "usage_limit": null, "merchant_tags": null, "id": "bocom_whitegold_b2", "card_id": "bocom_whitegold", "is_active": true}, {"title": "éåä»£é©¾", "benefit_type": "èµ ç¤¼", "category": "éç¨", "description": "æ¯å¹´6æ¬¡åè´¹éåä»£é©¾", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": null, "usage_limit": null, "merchant_tags": null, "id": "bocom_whitegold_b3", "card_id": "bocom_whitegold", "is_active": true}]}, {"bank": "åå¤§é¶è¡", "name": "åå¤§å­å¿å¡", "network": "é¶è", "level": "ç½éå¡", "annual_fee": "é¦å¹´å", "image_url": "https://webcdn.m.qq.com/ccreward/cards/ceb_xiaoxin.png", "description": "å­æ¬ç¶æ¯ä¸»é¢ï¼ä½æ£æç", "id": "ceb_xiaoxin", "is_active": true, "created_at": "2026-08-05T12:36:47", "benefits": [{"title": "åè´¹ä½æ£", "benefit_type": "èµ ç¤¼", "category": "éç¨", "description": "æ¯å¹´1æ¬¡åè´¹ä½æ£å¥é¤", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": null, "usage_limit": null, "merchant_tags": null, "id": "ceb_xiaoxin_b1", "card_id": "ceb_xiaoxin", "is_active": true}]}, {"bank": "åå¤§é¶è¡", "name": "åå¤§æé³èåå¡", "network": "é¶è", "level": "éå¡", "annual_fee": "åå¹´è´¹", "image_url": "https://webcdn.m.qq.com/ccreward/cards/ceb_douyin.png", "description": "æé³æ¶è´¹è¿ç°ï¼æ°æ·ç¤¼", "id": "ceb_douyin", "is_active": true, "created_at": "2026-08-05T12:36:47", "benefits": [{"title": "æé³æ¶è´¹è¿ç°", "benefit_type": "è¿ç°", "category": "çº¿ä¸æ¶è´¹", "description": "æé³æ¶è´¹è¿2%ç°", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": 2.0, "usage_limit": "æ¯æä¸é50å", "merchant_tags": "æé³", "id": "ceb_douyin_b1", "card_id": "ceb_douyin", "is_active": true}]}, {"bank": "åå¤§é¶è¡", "name": "åå¤§ç¾é£å¡", "network": "é¶è", "level": "éå¡", "annual_fee": "åå¹´è´¹", "image_url": "https://webcdn.m.qq.com/ccreward/cards/ceb_cate.png", "description": "é¤é¥®æ¶è´¹è¿ç°1%ï¼åä½é¤å5æèµ·", "id": "ceb_cate", "is_active": true, "created_at": "2026-08-05T12:36:47", "benefits": [{"title": "é¤é¥®è¿ç°", "benefit_type": "è¿ç°", "category": "é¤é¥®ç¾é£", "description": "é¤é¥®æ¶è´¹è¿1%ç°ï¼æ¯æä¸é50å", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": 1.0, "usage_limit": "æ¯æä¸é50å", "merchant_tags": null, "id": "ceb_cate_b1", "card_id": "ceb_cate", "is_active": true}, {"title": "åä½é¤å5æ", "benefit_type": "ææ£", "category": "é¤é¥®ç¾é£", "description": "åå¤§ç¾é£åæ·å¹³å°åä½é¤åæä½5æ", "value_text": null, "points_per_yuan": null, "discount_percent": 50.0, "cashback_percent": null, "usage_limit": null, "merchant_tags": null, "id": "ceb_cate_b2", "card_id": "ceb_cate", "is_active": true}]}, {"bank": "åå¤§é¶è¡", "name": "åå¤§é³åç½éå¡", "network": "é¶è", "level": "ç½éå¡", "annual_fee": "é¦å¹´åï¼æ¶è´¹12ç¬åæ¬¡å¹´", "image_url": "https://webcdn.m.qq.com/ccreward/cards/ceb_sunshine.png", "description": "åå¤§ç»å¸ç½éå¡ï¼å«æºåºè´µå®¾åãä¿é©ãéè·¯ææ´ç­æç", "id": "ceb_sunshine", "is_active": true, "created_at": "2026-08-05T12:36:47", "benefits": [{"title": "æºåºè´µå®¾å", "benefit_type": "è´µå®¾å", "category": "åºè¡ææ¸¸", "description": "å¨å½æºåº/é«éç«è´µå®¾åæ¯å¹´8æ¬¡", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": null, "usage_limit": null, "merchant_tags": null, "id": "ceb_sunshine_b1", "card_id": "ceb_sunshine", "is_active": true}, {"title": "åºè¡ä¿é©", "benefit_type": "ä¼åæç", "category": "åºè¡ææ¸¸", "description": "å«èªç©ºæå¤é©500ä¸ãèªç­å»¶è¯¯é©", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": null, "usage_limit": null, "merchant_tags": null, "id": "ceb_sunshine_b2", "card_id": "ceb_sunshine", "is_active": true}, {"title": "éè·¯ææ´", "benefit_type": "ä¼åæç", "category": "åºè¡ææ¸¸", "description": "å¨å½24å°æ¶éè·¯ææ´ï¼æ¯å¹´3æ¬¡", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": null, "usage_limit": null, "merchant_tags": null, "id": "ceb_sunshine_b3", "card_id": "ceb_sunshine", "is_active": true}]}, {"bank": "å´ä¸é¶è¡", "name": "å´ä¸passå¡", "network": "Visa", "level": "ç»å¸ç", "annual_fee": "åå¹´è´¹", "image_url": "https://webcdn.m.qq.com/ccreward/cards/cib_pass.png", "description": "åºè¡æçï¼12306è´­ç¥¨ä¼æ ", "id": "cib_pass", "is_active": true, "created_at": "2026-08-05T12:36:46", "benefits": [{"title": "12306è´­ç¥¨ä¼æ ", "benefit_type": "ææ£", "category": "åºè¡ææ¸¸", "description": "12306è´­ç¥¨éæºç«å", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": null, "usage_limit": null, "merchant_tags": "12306,ç«è½¦", "id": "cib_pass_b1", "card_id": "cib_pass", "is_active": true}]}, {"bank": "å´ä¸é¶è¡", "name": "å´ä¸æ·å®èåå¡", "network": "é¶è", "level": "éå¡", "annual_fee": "åå¹´è´¹", "image_url": "https://webcdn.m.qq.com/ccreward/cards/cib_tao.png", "description": "æ·å®/å¤©ç«æ¶è´¹è¿ç§¯åï¼ç§¯åæµç°", "id": "cib_tao", "is_active": true, "created_at": "2026-08-05T12:36:47", "benefits": [{"title": "æ·å®å¤©ç«ç§¯åå å", "benefit_type": "ç§¯åç´¯ç§¯", "category": "çº¿ä¸æ¶è´¹", "description": "æ·å®/å¤©ç«æ¶è´¹2åç§¯å", "value_text": null, "points_per_yuan": 2.0, "discount_percent": null, "cashback_percent": null, "usage_limit": null, "merchant_tags": "æ·å®,å¤©ç«", "id": "cib_tao_b1", "card_id": "cib_tao", "is_active": true}, {"title": "ç§¯åæµç°", "benefit_type": "ç§¯åç´¯ç§¯", "category": "çº¿ä¸æ¶è´¹", "description": "500ç§¯åæµ1åï¼æ·å®/å¤©ç«ä¸åæ¶èªå¨æµæ£", "value_text": "500ç§¯å=1å", "points_per_yuan": null, "discount_percent": null, "cashback_percent": null, "usage_limit": null, "merchant_tags": null, "id": "cib_tao_b2", "card_id": "cib_tao", "is_active": true}]}, {"bank": "å´ä¸é¶è¡", "name": "å´ä¸è¡å¡ï¼ä¸æ¹èªç©ºèåï¼", "network": "é¶è", "level": "ç½éå¡", "annual_fee": "é¦å¹´åï¼æ¶è´¹è¾¾æ åæ¬¡å¹´", "image_url": "https://webcdn.m.qq.com/ccreward/cards/cib_orient.png", "description": "æ¶è´¹èªå¨åæ¢ä¸èªéç¨ï¼10:1æ¯ä¾", "id": "cib_orient", "is_active": true, "created_at": "2026-08-05T12:36:47", "benefits": [{"title": "èªå¨åæ¢ä¸èªéç¨", "benefit_type": "ç§¯åç´¯ç§¯", "category": "åºè¡ææ¸¸", "description": "æ¶è´¹10åèªå¨åæ¢1ä¸èªéç¨ï¼æä¸é500éç¨", "value_text": null, "points_per_yuan": 0.1, "discount_percent": null, "cashback_percent": null, "usage_limit": null, "merchant_tags": "ä¸èª,éç¨", "id": "cib_orient_b1", "card_id": "cib_orient", "is_active": true}, {"title": "æºåºè´µå®¾å", "benefit_type": "è´µå®¾å", "category": "åºè¡ææ¸¸", "description": "å½åä¸»è¦æºåºè´µå®¾åæ¯å¹´6æ¬¡", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": null, "usage_limit": null, "merchant_tags": null, "id": "cib_orient_b2", "card_id": "cib_orient", "is_active": true}]}, {"bank": "å´ä¸é¶è¡", "name": "æå¤æè¾°å¡", "network": "é¶è", "level": "éå¡", "annual_fee": "åå¹´è´¹", "image_url": "https://webcdn.m.qq.com/ccreward/cards/cib_starry.png", "description": "å¤é´æ¶è´¹ç§¯åå åï¼éåå¤ç«æ", "id": "cib_starry", "is_active": true, "created_at": "2026-08-05T12:36:46", "benefits": [{"title": "å¤é´ç§¯åå å", "benefit_type": "ç§¯åç´¯ç§¯", "category": "ä¼é²å¨±ä¹", "description": "22:00-06:00æ¶è´¹2åç§¯å", "value_text": null, "points_per_yuan": 2.0, "discount_percent": null, "cashback_percent": null, "usage_limit": "å¤é´æ¶æ®µ", "merchant_tags": null, "id": "cib_starry_b1", "card_id": "cib_starry", "is_active": true}]}, {"bank": "åä¸é¶è¡", "name": "åè¡QQèåå¡", "network": "é¶è", "level": "éå¡", "annual_fee": "åå¹´è´¹", "image_url": "https://webcdn.m.qq.com/ccreward/cards/abc_qq.png", "description": "QQæ¶è´¹è¿ç°ï¼æ¯æQQè¶çº§ä¼åç¦å©", "id": "abc_qq", "is_active": true, "created_at": "2026-08-05T12:36:47", "benefits": [{"title": "QQæ¶è´¹è¿ç°", "benefit_type": "è¿ç°", "category": "çº¿ä¸æ¶è´¹", "description": "QQé±åæ¯ä»è¿1%", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": 1.0, "usage_limit": "æ¯æä¸é30å", "merchant_tags": null, "id": "abc_qq_b1", "card_id": "abc_qq", "is_active": true}, {"title": "QQä¼åç¦å©", "benefit_type": "èµ ç¤¼", "category": "çº¿ä¸æ¶è´¹", "description": "æ¯æè¾¾æ èµ éQQè¶çº§ä¼å", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": null, "usage_limit": null, "merchant_tags": "QQ,è¾è®¯", "id": "abc_qq_b2", "card_id": "abc_qq", "is_active": true}]}, {"bank": "åä¸é¶è¡", "name": "åè¡å°ç¶ç½éå¡", "network": "Visa", "level": "ç½éå¡", "annual_fee": "é¦å¹´åï¼æ¶è´¹è¾¾æ åæ¬¡å¹´", "image_url": "https://webcdn.m.qq.com/ccreward/cards/abc_zunran_platinum.png", "description": "å«æºåºè´µå®¾åãç§¯åæ¢éç¨", "id": "abc_zunran_platinum", "is_active": true, "created_at": "2026-08-05T12:36:47", "benefits": [{"title": "æºåºè´µå®¾å", "benefit_type": "è´µå®¾å", "category": "åºè¡ææ¸¸", "description": "å½åæºåºè´µå®¾åæ¯å¹´12æ¬¡åè´¹", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": null, "usage_limit": null, "merchant_tags": null, "id": "abc_platinum_b1", "card_id": "abc_zunran_platinum", "is_active": true}, {"title": "ç§¯åæ¢éç¨", "benefit_type": "ç§¯åç´¯ç§¯", "category": "åºè¡ææ¸¸", "description": "15ç§¯åå1éç¨", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": null, "usage_limit": null, "merchant_tags": null, "id": "abc_platinum_b2", "card_id": "abc_zunran_platinum", "is_active": true}]}, {"bank": "åä¸é¶è¡", "name": "æ¼äº®åçº§å¡", "network": "é¶è", "level": "éå¡", "annual_fee": "é¦å¹´åï¼æ¶è´¹5æ¬¡åæ¬¡å¹´", "image_url": "https://webcdn.m.qq.com/ccreward/cards/abc_pretty.png", "description": "å¥³æ§ä¸å±ï¼è¶å¸è¿ç°", "id": "abc_pretty", "is_active": true, "created_at": "2026-08-05T12:36:47", "benefits": [{"title": "è¶å¸è¿ç°", "benefit_type": "è¿ç°", "category": "è¶å¸ä¾¿å©", "description": "è¶å¸æ¶è´¹è¿1%ç°", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": 1.0, "usage_limit": "æ¯æä¸é30å", "merchant_tags": "è¶å¸,æ²å°ç,å¤§æ¶¦å", "id": "abc_pretty_b1", "card_id": "abc_pretty", "is_active": true}]}, {"bank": "åäº¬é¶è¡", "name": "åäº¬é¶è¡ç½éå¡", "network": "é¶è", "level": "ç½éå¡", "annual_fee": "é¦å¹´åï¼æ¶è´¹12ç¬åæ¬¡å¹´", "image_url": "https://webcdn.m.qq.com/ccreward/cards/bjb_bai.png", "description": "åäº¬å°åºä¸å±ä¼æ ï¼çº¿ä¸åæ·æ»¡åæ´»å¨ä¸°å¯", "id": "bjb_bai", "is_active": true, "created_at": "2026-08-05T12:36:47", "benefits": [{"title": "çº¿ä¸åæ·æ»¡å", "benefit_type": "ææ£", "category": "é¤é¥®ç¾é£", "description": "åäº¬å°åºåä½é¤é¥®åæ·æ»¡100å20", "value_text": null, "points_per_yuan": null, "discount_percent": 20.0, "cashback_percent": null, "usage_limit": null, "merchant_tags": "åäº¬,æ¬å°,é¤é¥®", "id": "bjb_bai_b1", "card_id": "bjb_bai", "is_active": true}, {"title": "çµå½±ç¥¨ä¼æ ", "benefit_type": "ææ£", "category": "ä¼é²å¨±ä¹", "description": "ç«ç¼çµå½±è´­ç¥¨ç«å10å", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": null, "usage_limit": "æ¯æ2æ¬¡", "merchant_tags": null, "id": "bjb_bai_b2", "card_id": "bjb_bai", "is_active": true}]}, {"bank": "åå¤é¶è¡", "name": "åå¤æå·´åèåå¡", "network": "é¶è", "level": "éå¡", "annual_fee": "åå¹´è´¹", "image_url": "https://webcdn.m.qq.com/ccreward/cards/hxb_starbucks.png", "description": "æå·´åæ¶è´¹ç§¯åå åï¼æ°æ·èµ æå·´åå¸", "id": "hxb_starbucks", "is_active": true, "created_at": "2026-08-05T12:36:47", "benefits": [{"title": "æå·´åç§¯åå å", "benefit_type": "ç§¯åç´¯ç§¯", "category": "åå¡è¶é¥®", "description": "æå·´åæ¶è´¹3åç§¯å", "value_text": null, "points_per_yuan": 3.0, "discount_percent": null, "cashback_percent": null, "usage_limit": null, "merchant_tags": "æå·´å,åå¡", "id": "hxb_starbucks_b1", "card_id": "hxb_starbucks", "is_active": true}, {"title": "æ°æ·èµ æå·´åå¸", "benefit_type": "èµ ç¤¼", "category": "åå¡è¶é¥®", "description": "æ°æ·é¦å·è¾¾æ èµ æå·´åé¥®åå¸Ã2", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": null, "usage_limit": null, "merchant_tags": "æå·´å,åå¡", "id": "hxb_starbucks_b2", "card_id": "hxb_starbucks", "is_active": true}]}, {"bank": "åå¤é¶è¡", "name": "åå¤ç²¾è±ç½éå¡", "network": "é¶è", "level": "ç½éå¡", "annual_fee": "é¦å¹´åï¼æ¶è´¹è¾¾æ åæ¬¡å¹´", "image_url": "https://webcdn.m.qq.com/ccreward/cards/hxb_elite_platinum.png", "description": "å«é«éè´µå®¾åè½¦ãç§¯åæ¢éç¨", "id": "hxb_elite_platinum", "is_active": true, "created_at": "2026-08-05T12:36:47", "benefits": [{"title": "é«éè´µå®¾åè½¦", "benefit_type": "ä¼åæç", "category": "åºè¡ææ¸¸", "description": "é«éç«è´µå®¾åè½¦å®¤åè´¹", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": null, "usage_limit": null, "merchant_tags": "é«é,12306", "id": "hxb_platinum_b1", "card_id": "hxb_elite_platinum", "is_active": true}, {"title": "ç§¯åæ¢éç¨", "benefit_type": "ç§¯åç´¯ç§¯", "category": "åºè¡ææ¸¸", "description": "16ç§¯åå1éç¨", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": null, "usage_limit": null, "merchant_tags": null, "id": "hxb_platinum_b2", "card_id": "hxb_elite_platinum", "is_active": true}]}, {"bank": "åäº¬é¶è¡", "name": "åäº¬é¶è¡é«æ¢è±å¡", "network": "é¶è", "level": "éå¡", "annual_fee": "åå¹´è´¹", "image_url": "https://webcdn.m.qq.com/ccreward/cards/njcb_unionpay.png", "description": "æ±èåºååæ·ä¼æ ï¼èæè¶å¸æ»¡å", "id": "njcb_unionpay", "is_active": true, "created_at": "2026-08-05T12:36:47", "benefits": [{"title": "èæè¶å¸æ»¡å", "benefit_type": "ææ£", "category": "è¶å¸ä¾¿å©", "description": "èæè¶å¸æ»¡100å15", "value_text": null, "points_per_yuan": null, "discount_percent": 15.0, "cashback_percent": null, "usage_limit": null, "merchant_tags": "è¶å¸,èæ", "id": "njcb_b1", "card_id": "njcb_unionpay", "is_active": true}]}, {"bank": "å®æ³¢é¶è¡", "name": "å®æ³¢é¶è¡ä¸æµ·ç½éå¡", "network": "Visa", "level": "ç½éå¡", "annual_fee": "é¦å¹´åï¼æ¶è´¹è¾¾æ åæ¬¡å¹´", "image_url": "https://webcdn.m.qq.com/ccreward/cards/nbcb_ocean.png", "description": "å¢å¤æ¶è´¹è¿2%ï¼æºåºè´µå®¾å+ç§¯åæ¢éç¨", "id": "nbcb_ocean", "is_active": true, "created_at": "2026-08-05T12:36:47", "benefits": [{"title": "å¢å¤æ¶è´¹è¿ç°", "benefit_type": "è¿ç°", "category": "åºè¡ææ¸¸", "description": "å¢å¤æ¶è´¹è¿2%ï¼æ¯æä¸é300å", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": 2.0, "usage_limit": "æ¯æä¸é300å", "merchant_tags": null, "id": "nbcb_ocean_b1", "card_id": "nbcb_ocean", "is_active": true}, {"title": "ç§¯åæ¢éç¨", "benefit_type": "ç§¯åç´¯ç§¯", "category": "åºè¡ææ¸¸", "description": "15ç§¯åå1éç¨ï¼ä¸å¤§èªéç¨", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": null, "usage_limit": null, "merchant_tags": null, "id": "nbcb_ocean_b2", "card_id": "nbcb_ocean", "is_active": true}]}, {"bank": "å®æ³¢é¶è¡", "name": "å®æ³¢é¶è¡æ±éå¡", "network": "é¶è", "level": "éå¡", "annual_fee": "åå¹´è´¹", "image_url": "https://webcdn.m.qq.com/ccreward/cards/nbcb_unionpay.png", "description": "å®æ³¢åæµæ±åºååæ·ä¼æ ï¼é¶æ³°ç¾è´§æ»¡å", "id": "nbcb_unionpay", "is_active": true, "created_at": "2026-08-05T12:36:47", "benefits": [{"title": "é¶æ³°ç¾è´§æ»¡å", "benefit_type": "ææ£", "category": "è´­ç©æ¶è´¹", "description": "é¶æ³°ç¾è´§æ¶è´¹æ»¡500å50", "value_text": null, "points_per_yuan": null, "discount_percent": 10.0, "cashback_percent": null, "usage_limit": null, "merchant_tags": "é¶æ³°,ç¾è´§", "id": "nbcb_unionpay_b1", "card_id": "nbcb_unionpay", "is_active": true}, {"title": "æµæ±åºåé¤é¥®ä¼æ ", "benefit_type": "ææ£", "category": "é¤é¥®ç¾é£", "description": "æµæ±åä½é¤é¥®æ¶è´¹æ»¡åï¼æ¯æ4æ¬¡", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": null, "usage_limit": null, "merchant_tags": "æµæ±,é¤é¥®", "id": "nbcb_unionpay_b2", "card_id": "nbcb_unionpay", "is_active": true}]}, {"bank": "å·¥åé¶è¡", "name": "å·¥é¶æ çç½éæ°å­ä¿¡ç¨å¡", "network": "é¶è", "level": "ç½éå¡", "annual_fee": "åå¹´è´¹", "image_url": "https://webcdn.m.qq.com/ccreward/cards/icbc_digital.png", "description": "æ°å­ä¿¡ç¨å¡ï¼ç»å®å¾®ä¿¡/æ¯ä»å®æ¶è´¹è¿ç°", "id": "icbc_digital", "is_active": true, "created_at": "2026-08-05T12:36:46", "benefits": [{"title": "å¾®ä¿¡/æ¯ä»å®æ¶è´¹è¿ç°", "benefit_type": "è¿ç°", "category": "çº¿ä¸æ¶è´¹", "description": "ç»å®å¾®ä¿¡/æ¯ä»å®æ¶è´¹è¿1%", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": 1.0, "usage_limit": "æ¯æä¸é100å", "merchant_tags": null, "id": "icbc_digital_b1", "card_id": "icbc_digital", "is_active": true}, {"title": "æ°æ·æ¶è´¹è¾¾æ è¿ç°", "benefit_type": "è¿ç°", "category": "éç¨", "description": "æ°æ·é¦ææ¶è´¹æ»¡1000è¿50å", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": 5.0, "usage_limit": null, "merchant_tags": null, "id": "icbc_digital_b2", "card_id": "icbc_digital", "is_active": true}]}, {"bank": "å·¥åé¶è¡", "name": "ç¡ä¸¹ä¿¡ç¨å¡ï¼éå¡ï¼", "network": "é¶è", "level": "éå¡", "annual_fee": "é¦å¹´åï¼æ¶è´¹5æ¬¡åæ¬¡å¹´", "image_url": "https://webcdn.m.qq.com/ccreward/cards/icbc_peony.png", "description": "å·¥è¡ç»å¸å¡ï¼ç½ç¹ä¾¿å©", "id": "icbc_peony", "is_active": true, "created_at": "2026-08-05T12:36:46", "benefits": [{"title": "ç§¯åç´¯ç§¯", "benefit_type": "ç§¯åç´¯ç§¯", "category": "éç¨", "description": "æ¶è´¹1åç§¯1å", "value_text": null, "points_per_yuan": 1.0, "discount_percent": null, "cashback_percent": null, "usage_limit": null, "merchant_tags": null, "id": "icbc_peony_b1", "card_id": "icbc_peony", "is_active": true}]}, {"bank": "å·¥åé¶è¡", "name": "ç¥¥é¾ç½éä¿¡ç¨å¡", "network": "é¶è", "level": "ç½éå¡", "annual_fee": "é¦å¹´åï¼æ¶è´¹12ç¬ææ»¡5ä¸åæ¬¡å¹´", "image_url": "https://webcdn.m.qq.com/ccreward/cards/icbc_xianglong.png", "description": "é¾å¹´ä¸»é¢å¡ï¼é«éè´µå®¾å+ç§¯åæ¢éç¨", "id": "icbc_xianglong", "is_active": true, "created_at": "2026-08-05T12:36:46", "benefits": [{"title": "é«éè´µå®¾å", "benefit_type": "è´µå®¾å", "category": "åºè¡ææ¸¸", "description": "å¨å½ä¸»è¦é«éç«è´µå®¾åè½¦å®¤åè´¹", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": null, "usage_limit": "æ¯å¡æ¯å¹´12æ¬¡", "merchant_tags": null, "id": "icbc_xianglong_b1", "card_id": "icbc_xianglong", "is_active": true}, {"title": "ç§¯åæ¢ç¤¼å", "benefit_type": "ç§¯åç´¯ç§¯", "category": "éç¨", "description": "ç§¯ååæ¢çµå­äº§åãæè¡ç¨å", "value_text": null, "points_per_yuan": 1.0, "discount_percent": null, "cashback_percent": null, "usage_limit": null, "merchant_tags": null, "id": "icbc_xianglong_b2", "card_id": "icbc_xianglong", "is_active": true}]}, {"bank": "å¹³å®é¶è¡", "name": "å¹³å®æ åç½éå¡", "network": "Mastercard", "level": "ç½éå¡", "annual_fee": "é¦å¹´2800å", "image_url": "https://webcdn.m.qq.com/ccreward/cards/pingan_platinum.png", "description": "å«éè·¯ææ´ãéåä»£é©¾ãæºåºè´µå®¾å", "id": "pingan_platinum", "is_active": true, "created_at": "2026-08-05T12:36:46", "benefits": [{"title": "éè·¯ææ´", "benefit_type": "ä¼åæç", "category": "åºè¡ææ¸¸", "description": "å¨å½åè´¹éè·¯ææ´ï¼æ¯å¹´3æ¬¡", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": null, "usage_limit": null, "merchant_tags": null, "id": "pingan_platinum_b1", "card_id": "pingan_platinum", "is_active": true}, {"title": "éåä»£é©¾", "benefit_type": "èµ ç¤¼", "category": "éç¨", "description": "æ¯å¹´6æ¬¡åè´¹éåä»£é©¾", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": null, "usage_limit": null, "merchant_tags": null, "id": "pingan_platinum_b2", "card_id": "pingan_platinum", "is_active": true}, {"title": "æºåºè´µå®¾å", "benefit_type": "è´µå®¾å", "category": "åºè¡ææ¸¸", "description": "å¨çæºåºè´µå®¾åæ éæ¬¡", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": null, "usage_limit": null, "merchant_tags": null, "id": "pingan_platinum_b3", "card_id": "pingan_platinum", "is_active": true}]}, {"bank": "å¹³å®é¶è¡", "name": "å¹³å®ç±ä½ å¡", "network": "é¶è", "level": "ç»å¸ç", "annual_fee": "åå¹´è´¹", "image_url": "https://webcdn.m.qq.com/ccreward/cards/pingan_freedom.png", "description": "å¯èªå®ä¹å¡é¢ï¼ç§¯åå½é±è±", "id": "pingan_freedom", "is_active": true, "created_at": "2026-08-05T12:36:46", "benefits": [{"title": "ç§¯åå½é±è±", "benefit_type": "ç§¯åç´¯ç§¯", "category": "éç¨", "description": "ç§¯åå¯ç´æ¥æµæ£æ¶è´¹ï¼1ç§¯å=1åé±", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": null, "usage_limit": null, "merchant_tags": null, "id": "pingan_freedom_b1", "card_id": "pingan_freedom", "is_active": true}, {"title": "èªå®ä¹å¡é¢", "benefit_type": "å¶ä»", "category": "éç¨", "description": "å¯ä¸ä¼ èªå®ä¹å¡é¢å¾ç", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": null, "usage_limit": null, "merchant_tags": null, "id": "pingan_freedom_b2", "card_id": "pingan_freedom", "is_active": true}]}, {"bank": "å¹¿åé¶è¡", "name": "å¹¿åå¤å©å¡", "network": "é¶è", "level": "éå¡", "annual_fee": "é¦å¹´åï¼æ¶è´¹12æ¬¡åæ¬¡å¹´", "image_url": "https://webcdn.m.qq.com/ccreward/cards/cgb_duoli.png", "description": "é¤é¥®ç¾è´§è¿ç°ï¼éåæ¥å¸¸æ¶è´¹", "id": "cgb_duoli", "is_active": true, "created_at": "2026-08-05T12:36:46", "benefits": [{"title": "é¤é¥®ç¾è´§è¿ç°", "benefit_type": "è¿ç°", "category": "é¤é¥®ç¾é£", "description": "é¤é¥®ãç¾è´§æ¶è´¹è¿1%", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": 1.0, "usage_limit": "æ¯æä¸é50å", "merchant_tags": null, "id": "cgb_duoli_b1", "card_id": "cgb_duoli", "is_active": true}]}, {"bank": "å¹¿åé¶è¡", "name": "å¹¿åçæå¡", "network": "é¶è", "level": "éå¡", "annual_fee": "åå¹´è´¹", "image_url": "https://webcdn.m.qq.com/ccreward/cards/cgb_zhenqing.png", "description": "å¥³æ§ä¸å±ï¼èªéåæ·ä¸åç§¯å", "id": "cgb_zhenqing", "is_active": true, "created_at": "2026-08-05T12:36:46", "benefits": [{"title": "èªéåæ·ä¸åç§¯å", "benefit_type": "ç§¯åç´¯ç§¯", "category": "è´­ç©æ¶è´¹", "description": "èªé1ç±»åæ·æ¶è´¹3åç§¯å", "value_text": null, "points_per_yuan": 3.0, "discount_percent": null, "cashback_percent": null, "usage_limit": "æ¯æä¸é1ä¸å", "merchant_tags": null, "id": "cgb_zhenqing_b1", "card_id": "cgb_zhenqing", "is_active": true}]}, {"bank": "å¹¿å·é¶è¡", "name": "å¹¿å·é¶è¡é¶èéå¡", "network": "é¶è", "level": "éå¡", "annual_fee": "åå¹´è´¹", "image_url": "https://webcdn.m.qq.com/ccreward/cards/gzcb_unionpay.png", "description": "ç²¤æ¸¯æ¾³å¤§æ¹¾åºç¹è²ï¼é¤é¥®æ¶è´¹è¿ç°", "id": "gzcb_unionpay", "is_active": true, "created_at": "2026-08-05T12:36:47", "benefits": [{"title": "å¤§æ¹¾åºé¤é¥®è¿ç°", "benefit_type": "è¿ç°", "category": "é¤é¥®ç¾é£", "description": "åä½é¤é¥®æ¶è´¹è¿2%", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": 2.0, "usage_limit": null, "merchant_tags": "å¹¿ä¸,é¤é¥®", "id": "gzcb_b1", "card_id": "gzcb_unionpay", "is_active": true}]}, {"bank": "å»ºè®¾é¶è¡", "name": "MUSEå¡", "network": "Visa", "level": "ç½éå¡", "annual_fee": "é¦å¹´åï¼æ¶è´¹8ç¬åæ¬¡å¹´", "image_url": "https://webcdn.m.qq.com/ccreward/cards/ccb_muse.png", "description": "ç½çº¢è®¾è®¡å¡é¢ï¼æ¼åº/èºæ¯å±è§ä¼æ ", "id": "ccb_muse", "is_active": true, "created_at": "2026-08-05T12:36:46", "benefits": [{"title": "æ¼åºè´­ç¥¨ä¼æ ", "benefit_type": "ææ£", "category": "ä¼é²å¨±ä¹", "description": "å¤§éº¦/ç«ç¼è´­ç¥¨9æ", "value_text": null, "points_per_yuan": null, "discount_percent": 10.0, "cashback_percent": null, "usage_limit": "æ¯æ2æ¬¡", "merchant_tags": "æ¼åº,å¤§éº¦,ç«ç¼", "id": "ccb_muse_b1", "card_id": "ccb_muse", "is_active": true}, {"title": "èºæ¯å±è§ä¼æ ", "benefit_type": "ææ£", "category": "ä¼é²å¨±ä¹", "description": "åä½ç¾æ¯é¦/åç©é¦é¨ç¥¨ææ£", "value_text": null, "points_per_yuan": null, "discount_percent": 20.0, "cashback_percent": null, "usage_limit": null, "merchant_tags": null, "id": "ccb_muse_b2", "card_id": "ccb_muse", "is_active": true}]}, {"bank": "å»ºè®¾é¶è¡", "name": "å»ºè¡çæ´»å¡", "network": "é¶è", "level": "ç»å¸ç", "annual_fee": "åå¹´è´¹", "image_url": "https://webcdn.m.qq.com/ccreward/cards/ccb_life.png", "description": "ç»å®å»ºè¡çæ´»Appï¼æ¬å°åæ·ä¼æ ", "id": "ccb_life", "is_active": true, "created_at": "2026-08-05T12:36:46", "benefits": [{"title": "æ¬å°åæ·ä¼æ ", "benefit_type": "ææ£", "category": "é¤é¥®ç¾é£", "description": "å»ºè¡çæ´»Appæ¬å°åæ·ä¸å±ææ£", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": null, "usage_limit": null, "merchant_tags": "æ¬å°,é¤é¥®,è¶å¸", "id": "ccb_life_b1", "card_id": "ccb_life", "is_active": true}, {"title": "å¤åæ»¡å", "benefit_type": "ææ£", "category": "é¤é¥®ç¾é£", "description": "ç¾å¢/é¥¿äºä¹å¤åæ»¡30å5~10", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": null, "usage_limit": null, "merchant_tags": "ç¾å¢,é¥¿äºä¹,å¤å", "id": "ccb_life_b2", "card_id": "ccb_life", "is_active": true}]}, {"bank": "å»ºè®¾é¶è¡", "name": "é¾å¡å¨çæ¯ä»ä¿¡ç¨å¡", "network": "Visa", "level": "ç½éå¡", "annual_fee": "é¦å¹´åï¼æ¶è´¹3æ¬¡åæ¬¡å¹´", "image_url": "https://webcdn.m.qq.com/ccreward/cards/ccb_global_pay.png", "description": "å¢å¤æ¶è´¹è¿ç°ï¼æµ·æ·åå¥½", "id": "ccb_global_pay", "is_active": true, "created_at": "2026-08-05T12:36:46", "benefits": [{"title": "å¢å¤æ¶è´¹è¿ç°", "benefit_type": "è¿ç°", "category": "åºè¡ææ¸¸", "description": "å¢å¤æ¶è´¹è¿1%ç°", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": 1.0, "usage_limit": "æ¯æä¸é500å", "merchant_tags": null, "id": "ccb_global_b1", "card_id": "ccb_global_pay", "is_active": true}, {"title": "æµ·æ·ç§¯åå é", "benefit_type": "ç§¯åç´¯ç§¯", "category": "çº¿ä¸æ¶è´¹", "description": "æå®æµ·æ·åæ·2åç§¯å", "value_text": null, "points_per_yuan": 2.0, "discount_percent": null, "cashback_percent": null, "usage_limit": null, "merchant_tags": null, "id": "ccb_global_b2", "card_id": "ccb_global_pay", "is_active": true}]}, {"bank": "æé½é¶è¡", "name": "æé½é¶è¡èéå¡", "network": "é¶è", "level": "éå¡", "annual_fee": "åå¹´è´¹", "image_url": "https://webcdn.m.qq.com/ccreward/cards/cdcb_shu.png", "description": "æé½åºåç¾é£ä¼æ ï¼ç«é/ä¸²ä¸²8æèµ·", "id": "cdcb_shu", "is_active": true, "created_at": "2026-08-05T12:36:47", "benefits": [{"title": "ç«éä¸²ä¸²ææ£", "benefit_type": "ææ£", "category": "é¤é¥®ç¾é£", "description": "æé½åä½ç«é/ä¸²ä¸²åº8æèµ·", "value_text": null, "points_per_yuan": null, "discount_percent": 20.0, "cashback_percent": null, "usage_limit": "æ¯å¡æ¯æ4æ¬¡", "merchant_tags": "æé½,ç«é,é¤é¥®", "id": "cdcb_b1", "card_id": "cdcb_shu", "is_active": true}]}, {"bank": "æåé¶è¡", "name": "YOUNGå¡ï¼éå¹´çï¼", "network": "é¶è", "level": "ç»å¸ç", "annual_fee": "åé¦å¹´å¹´è´¹ï¼æ¶è´¹6æ¬¡åæ¬¡å¹´", "image_url": "https://webcdn.m.qq.com/ccreward/cards/cmb_young.png", "description": "30å²ä»¥ä¸ä¸å±ï¼åç°ä¼æ ï¼éåå¹´è½»äºº", "id": "cmb_young", "is_active": true, "created_at": "2026-08-05T12:36:46", "benefits": [{"title": "åç°æç»­è´¹ä¼æ ", "benefit_type": "ææ£", "category": "éç¨", "description": "å¢ååç°æ¯ç¬æç»­è´¹åå", "value_text": null, "points_per_yuan": null, "discount_percent": 50.0, "cashback_percent": null, "usage_limit": "æ¯å¡æ¯æé¦ç¬å", "merchant_tags": null, "id": "cmb_young_b1", "card_id": "cmb_young", "is_active": true}, {"title": "æ°æ·é¦å·ç¤¼", "benefit_type": "èµ ç¤¼", "category": "éç¨", "description": "æ°æ·é¦å·è¾¾æ éææç®±æç§¯å", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": null, "usage_limit": null, "merchant_tags": null, "id": "cmb_young_b2", "card_id": "cmb_young", "is_active": true}, {"title": "çå¹¸åå¡ä¼æ ", "benefit_type": "ææ£", "category": "åå¡è¶é¥®", "description": "çå¹¸åå¡æ»¡20å10", "value_text": null, "points_per_yuan": null, "discount_percent": 50.0, "cashback_percent": null, "usage_limit": "æ¯å¡æ¯æ2æ¬¡", "merchant_tags": "çå¹¸,åå¡", "id": "cmb_young_b3", "card_id": "cmb_young", "is_active": true}]}, {"bank": "æåé¶è¡", "name": "ç»å¸çVisaä¿¡ç¨å¡", "network": "Visa", "level": "ç»å¸ç", "annual_fee": "åé¦å¹´å¹´è´¹ï¼å½å¹´æ¶è´¹6æ¬¡åæ¬¡å¹´å¹´è´¹", "image_url": "https://webcdn.m.qq.com/ccreward/cards/cmb_classic_visa.png", "description": "æè¡ç»å¸å¡ï¼é¤é¥®æççªåºï¼éåæ¥å¸¸æ¶è´¹", "id": "cmb_classic_visa", "is_active": true, "created_at": "2026-08-05T12:36:46", "benefits": [{"title": "é¤é¥®æ¶è´¹ç§¯åç´¯ç§¯", "benefit_type": "ç§¯åç´¯ç§¯", "category": "é¤é¥®ç¾é£", "description": "é¤é¥®ç±»æ¶è´¹æ¯20åç§¯1åï¼ç§¯åå¯åæ¢æå·´åãçå¹¸ç­é¥®å", "value_text": null, "points_per_yuan": 0.05, "discount_percent": null, "cashback_percent": null, "usage_limit": "æ ä¸é", "merchant_tags": "é¤é¥®,ç¾é£,å¤å", "id": "cmb_classic_b1", "card_id": "cmb_classic_visa", "is_active": true}, {"title": "æå·´åä¹°ä¸èµ ä¸", "benefit_type": "ä¹°ä¸èµ ä¸", "category": "åå¡è¶é¥®", "description": "æ¯å¨ä¸æå·´åæå®é¥®åä¹°ä¸èµ ä¸", "value_text": "ä¹°ä¸èµ ä¸", "points_per_yuan": null, "discount_percent": null, "cashback_percent": null, "usage_limit": "æ¯å¨ä¸ï¼æ¯å¡æ¯æé2æ¬¡", "merchant_tags": "æå·´å,åå¡", "id": "cmb_classic_b2", "card_id": "cmb_classic_visa", "is_active": true}, {"title": "ç¾é£åä»·", "benefit_type": "ææ£", "category": "é¤é¥®ç¾é£", "description": "æ¯å¨ä¸/å¨å­æå®é¤å5æä¼æ ", "value_text": null, "points_per_yuan": null, "discount_percent": 50.0, "cashback_percent": null, "usage_limit": "æ¯å¨ä¸ãå¨å­ï¼æä¸çæ´»Appé¢å", "merchant_tags": "é¤é¥®,ç¾é£", "id": "cmb_classic_b3", "card_id": "cmb_classic_visa", "is_active": true}, {"title": "çº¿ä¸æ¶è´¹è¿ç§¯å", "benefit_type": "ç§¯åç´¯ç§¯", "category": "çº¿ä¸æ¶è´¹", "description": "æ¯ä»å®/å¾®ä¿¡ç»å¡æ¶è´¹ï¼æ¯20åç§¯1å", "value_text": null, "points_per_yuan": 0.05, "discount_percent": null, "cashback_percent": null, "usage_limit": null, "merchant_tags": "æ¯ä»å®,å¾®ä¿¡,çº¿ä¸", "id": "cmb_classic_b4", "card_id": "cmb_classic_visa", "is_active": true}]}, {"bank": "æåé¶è¡", "name": "ç»å¸çç½éä¿¡ç¨å¡", "network": "Visa", "level": "ç½éå¡", "annual_fee": "é¦å¹´800åï¼æ¶è´¹æ»¡20ä¸åæ¬¡å¹´", "image_url": "https://webcdn.m.qq.com/ccreward/cards/cmb_classic_platinum.png", "description": "ç½éå¡ï¼å«æºåºè´µå®¾åãç§¯åå éç­æç", "id": "cmb_classic_platinum", "is_active": true, "created_at": "2026-08-05T12:36:46", "benefits": [{"title": "æºåºè´µå®¾å", "benefit_type": "è´µå®¾å", "category": "åºè¡ææ¸¸", "description": "å¨çæºåºè´µå®¾åæ éæ¬¡", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": null, "usage_limit": "éåºç¤ºç½éå¡", "merchant_tags": null, "id": "cmb_platinum_b1", "card_id": "cmb_classic_platinum", "is_active": true}, {"title": "ç§¯åå é", "benefit_type": "ç§¯åç´¯ç§¯", "category": "éç¨", "description": "æ¶è´¹ç§¯å1.5åå é", "value_text": null, "points_per_yuan": 0.075, "discount_percent": null, "cashback_percent": null, "usage_limit": null, "merchant_tags": null, "id": "cmb_platinum_b2", "card_id": "cmb_classic_platinum", "is_active": true}, {"title": "æ»´æ»´æè½¦ä¼æ ", "benefit_type": "ææ£", "category": "åºè¡ææ¸¸", "description": "æ»´æ»´æè½¦æ¯å¨2æ¬¡8æ", "value_text": null, "points_per_yuan": null, "discount_percent": 20.0, "cashback_percent": null, "usage_limit": "æ¯å¡æ¯å¨2æ¬¡", "merchant_tags": "æ»´æ»´,åºè¡", "id": "cmb_platinum_b3", "card_id": "cmb_classic_platinum", "is_active": true}]}, {"bank": "æ­å·é¶è¡", "name": "æ­å·é¶è¡è¥¿æ¹å¡", "network": "é¶è", "level": "ç»å¸ç", "annual_fee": "åå¹´è´¹", "image_url": "https://webcdn.m.qq.com/ccreward/cards/hzcb_xihu.png", "description": "æ­å·/æµæ±åºååæ·ä¼æ ï¼æ¯ä»å®æ¶è´¹è¿ç°", "id": "hzcb_xihu", "is_active": true, "created_at": "2026-08-05T12:36:47", "benefits": [{"title": "æ¯ä»å®æ¶è´¹è¿ç°", "benefit_type": "è¿ç°", "category": "çº¿ä¸æ¶è´¹", "description": "æ¯ä»å®æ¶è´¹è¿0.5%", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": 0.5, "usage_limit": null, "merchant_tags": "æ¯ä»å®", "id": "hzcb_b1", "card_id": "hzcb_xihu", "is_active": true}]}, {"bank": "æ°çé¶è¡", "name": "æ°çinå¡", "network": "é¶è", "level": "ç»å¸ç", "annual_fee": "åå¹´è´¹", "image_url": "https://webcdn.m.qq.com/ccreward/cards/cmbc_in.png", "description": "äºèç½æ¶è´¹è¿ç°ï¼è¯è´¹åå¼ä¼æ ", "id": "cmbc_in", "is_active": true, "created_at": "2026-08-05T12:36:47", "benefits": [{"title": "äºèç½æ¶è´¹è¿ç°", "benefit_type": "è¿ç°", "category": "çº¿ä¸æ¶è´¹", "description": "æå®äºèç½åæ·è¿ç°", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": 1.0, "usage_limit": null, "merchant_tags": null, "id": "cmbc_in_b1", "card_id": "cmbc_in", "is_active": true}, {"title": "è¯è´¹åå¼ä¼æ ", "benefit_type": "ææ£", "category": "çæ´»ç¼´è´¹", "description": "è¯è´¹åå¼éæºç«å", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": null, "usage_limit": null, "merchant_tags": null, "id": "cmbc_in_b2", "card_id": "cmbc_in", "is_active": true}]}, {"bank": "æ°çé¶è¡", "name": "æ°çç²¾è±ç½éå¡", "network": "é¶è", "level": "ç½éå¡", "annual_fee": "é¦å¹´åï¼æ¶è´¹18ç¬åæ¬¡å¹´", "image_url": "https://webcdn.m.qq.com/ccreward/cards/cmbc_elite.png", "description": "æºåºè´µå®¾åãéè·¯ææ´ãéåä»£é©¾", "id": "cmbc_elite", "is_active": true, "created_at": "2026-08-05T12:36:47", "benefits": [{"title": "æºåºè´µå®¾å", "benefit_type": "è´µå®¾å", "category": "åºè¡ææ¸¸", "description": "å¨çæºåºè´µå®¾åæ¯å¹´12æ¬¡", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": null, "usage_limit": null, "merchant_tags": null, "id": "cmbc_elite_b1", "card_id": "cmbc_elite", "is_active": true}, {"title": "éè·¯ææ´", "benefit_type": "ä¼åæç", "category": "åºè¡ææ¸¸", "description": "å¨å½24å°æ¶éè·¯ææ´ï¼æ¯å¹´3æ¬¡", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": null, "usage_limit": null, "merchant_tags": null, "id": "cmbc_elite_b2", "card_id": "cmbc_elite", "is_active": true}, {"title": "éåä»£é©¾", "benefit_type": "èµ ç¤¼", "category": "éç¨", "description": "æ¯å¹´4æ¬¡éåä»£é©¾", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": null, "usage_limit": null, "merchant_tags": null, "id": "cmbc_elite_b3", "card_id": "cmbc_elite", "is_active": true}]}, {"bank": "æ±èé¶è¡", "name": "æ±èé¶è¡èäº«ç½éå¡", "network": "é¶è", "level": "ç½éå¡", "annual_fee": "é¦å¹´åï¼æ¶è´¹12ç¬åæ¬¡å¹´", "image_url": "https://webcdn.m.qq.com/ccreward/cards/jsb_su.png", "description": "èå®/äº¬ä¸/ç¾å¢æ»¡åä¼æ ï¼ç§¯ååæ¢èå®å¡", "id": "jsb_su", "is_active": true, "created_at": "2026-08-05T12:36:47", "benefits": [{"title": "èå®/äº¬ä¸æ»¡å", "benefit_type": "ææ£", "category": "çº¿ä¸æ¶è´¹", "description": "èå®/äº¬ä¸æ¶è´¹æ»¡200å20", "value_text": null, "points_per_yuan": null, "discount_percent": 10.0, "cashback_percent": null, "usage_limit": null, "merchant_tags": "èå®,äº¬ä¸", "id": "jsb_su_b1", "card_id": "jsb_su", "is_active": true}, {"title": "ç§¯ååèå®å¡", "benefit_type": "ç§¯åç´¯ç§¯", "category": "è´­ç©æ¶è´¹", "description": "10000ç§¯ååæ¢100åèå®å¡", "value_text": "10000ç§¯å=100å", "points_per_yuan": null, "discount_percent": null, "cashback_percent": null, "usage_limit": null, "merchant_tags": null, "id": "jsb_su_b2", "card_id": "jsb_su", "is_active": true}, {"title": "ç¾å¢æ»¡å", "benefit_type": "ææ£", "category": "é¤é¥®ç¾é£", "description": "ç¾å¢å¤åæ»¡30å8", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": null, "usage_limit": null, "merchant_tags": "ç¾å¢,å¤å", "id": "jsb_su_b3", "card_id": "jsb_su", "is_active": true}]}, {"bank": "æ±èé¶è¡", "name": "æ±èé¶è¡é¶èéå¡", "network": "é¶è", "level": "éå¡", "annual_fee": "åå¹´è´¹", "image_url": "https://webcdn.m.qq.com/ccreward/cards/jsb_unionpay.png", "description": "æ±èåºååæ·å¨è¦çï¼å¤§æ¶¦å/èææ»¡å", "id": "jsb_unionpay", "is_active": true, "created_at": "2026-08-05T12:36:47", "benefits": [{"title": "å¤§æ¶¦å/èææ»¡å", "benefit_type": "ææ£", "category": "è¶å¸ä¾¿å©", "description": "å¤§æ¶¦å/èææ¶è´¹æ»¡100åæ¿ç­15", "value_text": null, "points_per_yuan": null, "discount_percent": 15.0, "cashback_percent": null, "usage_limit": null, "merchant_tags": "è¶å¸,å¤§æ¶¦å,èæ", "id": "jsb_unionpay_b1", "card_id": "jsb_unionpay", "is_active": true}]}, {"bank": "æµ¦åé¶è¡", "name": "æµ¦åAEç½éå¡", "network": "ç¾å½è¿é", "level": "ç½éå¡", "annual_fee": "é¦å¹´åï¼æ¶è´¹è¾¾æ åæ¬¡å¹´", "image_url": "https://webcdn.m.qq.com/ccreward/cards/spdb_ae_platinum.png", "description": "ç¾è¿ç½éï¼å«PPè´µå®¾å®¤ãéåºæç", "id": "spdb_ae_platinum", "is_active": true, "created_at": "2026-08-05T12:36:46", "benefits": [{"title": "PPè´µå®¾å®¤", "benefit_type": "è´µå®¾å", "category": "åºè¡ææ¸¸", "description": "Priority Passå¨çè´µå®¾å®¤æ¯å¹´8æ¬¡åè´¹", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": null, "usage_limit": null, "merchant_tags": null, "id": "spdb_ae_b1", "card_id": "spdb_ae_platinum", "is_active": true}, {"title": "éåºæç", "benefit_type": "ææ£", "category": "åºè¡ææ¸¸", "description": "æå®éåºä½3ä»2ãåè´¹æ©é¤", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": null, "usage_limit": null, "merchant_tags": null, "id": "spdb_ae_b2", "card_id": "spdb_ae_platinum", "is_active": true}]}, {"bank": "æµ¦åé¶è¡", "name": "æµ¦åéæ¥å¡", "network": "é¶è", "level": "ç»å¸ç", "annual_fee": "åå¹´è´¹", "image_url": "https://webcdn.m.qq.com/ccreward/cards/spdb_youth.png", "description": "35å²ä»¥ä¸ä¸å±ï¼ç§¯åæ¢éç¨", "id": "spdb_youth", "is_active": true, "created_at": "2026-08-05T12:36:46", "benefits": [{"title": "ç§¯åæ¢éç¨", "benefit_type": "ç§¯åç´¯ç§¯", "category": "åºè¡ææ¸¸", "description": "12ç§¯ååæ¢1ä¸èªéç¨", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": null, "usage_limit": null, "merchant_tags": "ä¸èª,å½èª,åèª", "id": "spdb_youth_b1", "card_id": "spdb_youth", "is_active": true}]}, {"bank": "æ·±å³ååé¶è¡", "name": "æ·±å³ååé¶è¡é»å¡", "network": "é¶è", "level": "ç»å¸ç", "annual_fee": "åå¹´è´¹", "image_url": "https://webcdn.m.qq.com/ccreward/cards/szpa_unionpay.png", "description": "æ·±å³å°åºä¾¿å©åº/å°éä¼æ ", "id": "szpa_unionpay", "is_active": true, "created_at": "2026-08-05T12:36:47", "benefits": [{"title": "ä¾¿å©åºä¼æ ", "benefit_type": "ææ£", "category": "è¶å¸ä¾¿å©", "description": "å¨å®¶/ç¾å®ä½³æ¶è´¹æ»¡15å3", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": null, "usage_limit": null, "merchant_tags": "ä¾¿å©åº", "id": "szpa_b1", "card_id": "szpa_unionpay", "is_active": true}, {"title": "å°éåºè¡ä¼æ ", "benefit_type": "è¿ç°", "category": "åºè¡ææ¸¸", "description": "æ·±å³éåå¼è¿5%", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": 5.0, "usage_limit": null, "merchant_tags": "åºè¡,å°é", "id": "szpa_b2", "card_id": "szpa_unionpay", "is_active": true}]}, {"bank": "èå·é¶è¡", "name": "èå·é¶è¡å§èå¡", "network": "é¶è", "level": "ç»å¸ç", "annual_fee": "åå¹´è´¹", "image_url": "https://webcdn.m.qq.com/ccreward/cards/suzbc_unionpay.png", "description": "èå·/é¿ä¸è§åºåæ¶è´¹ä¼æ ", "id": "suzbc_unionpay", "is_active": true, "created_at": "2026-08-05T12:36:47", "benefits": [{"title": "é¿ä¸è§æ¶è´¹ä¼æ ", "benefit_type": "ææ£", "category": "é¤é¥®ç¾é£", "description": "èå·/é¿ä¸è§åä½é¤é¥®æ»¡å", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": null, "usage_limit": null, "merchant_tags": "èå·,é¿ä¸è§,é¤é¥®", "id": "suzbc_b1", "card_id": "suzbc_unionpay", "is_active": true}]}, {"bank": "é®å¨é¶è¡", "name": "é®å¨æ¦äº«ç½éå¡", "network": "é¶è", "level": "ç½éå¡", "annual_fee": "é¦å¹´åï¼æ¶è´¹12ç¬åæ¬¡å¹´", "image_url": "https://webcdn.m.qq.com/ccreward/cards/psbc_youhui.png", "description": "å«è§å½±ä¼æ ãå æ²¹æ»¡åãè¶å¸è¿ç°ç­å¤éçæ´»æç", "id": "psbc_youhui", "is_active": true, "created_at": "2026-08-05T12:36:47", "benefits": [{"title": "è§å½±ä¼æ ", "benefit_type": "ææ£", "category": "ä¼é²å¨±ä¹", "description": "ç«ç¼/æ·ç¥¨ç¥¨è´­ç¥¨9åèµ·", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": null, "usage_limit": null, "merchant_tags": "ç«ç¼,æ·ç¥¨ç¥¨,çµå½±", "id": "psbc_youhui_b1", "card_id": "psbc_youhui", "is_active": true}, {"title": "å æ²¹æ»¡å", "benefit_type": "ææ£", "category": "åºè¡ææ¸¸", "description": "ä¸­ç³å/ä¸­ç³æ²¹å æ²¹æ»¡200å20", "value_text": null, "points_per_yuan": null, "discount_percent": 10.0, "cashback_percent": null, "usage_limit": null, "merchant_tags": "å æ²¹,ä¸­ç³å,ä¸­ç³æ²¹", "id": "psbc_youhui_b2", "card_id": "psbc_youhui", "is_active": true}, {"title": "è¶å¸è¿ç°", "benefit_type": "è¿ç°", "category": "è¶å¸ä¾¿å©", "description": "æå®è¶å¸æ¶è´¹è¿1%", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": 1.0, "usage_limit": null, "merchant_tags": "è¶å¸", "id": "psbc_youhui_b3", "card_id": "psbc_youhui", "is_active": true}]}, {"bank": "é®å¨é¶è¡", "name": "é®å¨ææ¸¸å¡", "network": "Mastercard", "level": "éå¡", "annual_fee": "åå¹´è´¹", "image_url": "https://webcdn.m.qq.com/ccreward/cards/psbc_travel.png", "description": "å¢å¤åºæ¸¸è¿ç°1%ï¼å¢å¤ATMåç°åé¦ç¬æç»­è´¹", "id": "psbc_travel", "is_active": true, "created_at": "2026-08-05T12:36:47", "benefits": [{"title": "å¢å¤æ¶è´¹è¿ç°", "benefit_type": "è¿ç°", "category": "åºè¡ææ¸¸", "description": "å¢å¤æ¶è´¹è¿1%ï¼æ¯æä¸é200å", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": 1.0, "usage_limit": "æ¯æä¸é200å", "merchant_tags": null, "id": "psbc_travel_b1", "card_id": "psbc_travel", "is_active": true}, {"title": "å¢å¤ATMåç°ä¼æ ", "benefit_type": "ææ£", "category": "åºè¡ææ¸¸", "description": "å¢å¤ATMåç°æ¯æé¦ç¬åæç»­è´¹", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": null, "usage_limit": null, "merchant_tags": null, "id": "psbc_travel_b2", "card_id": "psbc_travel", "is_active": true}]}, {"bank": "é®å¨é¶è¡", "name": "é®å¨æç±³å¡", "network": "é¶è", "level": "ç»å¸ç", "annual_fee": "åå¹´è´¹", "image_url": "https://webcdn.m.qq.com/ccreward/cards/psbc_youmi.png", "description": "å¿åç¹è²å¡ï¼åäº§åæ¶è´¹ä¼æ ", "id": "psbc_youmi", "is_active": true, "created_at": "2026-08-05T12:36:47", "benefits": [{"title": "åäº§åä¼æ ", "benefit_type": "ææ£", "category": "è¶å¸ä¾¿å©", "description": "åä½åäº§ååæ·æ»¡åä¼æ ", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": null, "usage_limit": null, "merchant_tags": "åäº§å,è¶å¸", "id": "psbc_youmi_b1", "card_id": "psbc_youmi", "is_active": true}]}, {"bank": "é®å¨é¶è¡", "name": "é®å¨é¼å¡", "network": "é¶è", "level": "éå¡", "annual_fee": "åå¹´è´¹", "image_url": "https://webcdn.m.qq.com/ccreward/cards/psbc_ding.png", "description": "æ®æ å¡ï¼æ¬å°åæ·ä¼æ ", "id": "psbc_ding", "is_active": true, "created_at": "2026-08-05T12:36:47", "benefits": [{"title": "æ¬å°åæ·ä¼æ ", "benefit_type": "ææ£", "category": "éç¨", "description": "æ¬å°åä½åæ·æ¶è´¹ææ£", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": null, "usage_limit": null, "merchant_tags": null, "id": "psbc_ding_b1", "card_id": "psbc_ding", "is_active": true}]}, {"bank": "éåºé¶è¡", "name": "éåºé¶è¡è¥¿æç½éå¡", "network": "é¶è", "level": "ç½éå¡", "annual_fee": "é¦å¹´åï¼æ¶è´¹è¾¾æ åæ¬¡å¹´", "image_url": "https://webcdn.m.qq.com/ccreward/cards/cqcb_xi.png", "description": "æºç¨/éçæ¶è´¹è¿ç°ï¼éåºé¢è®¢ææ£", "id": "cqcb_xi", "is_active": true, "created_at": "2026-08-05T12:36:47", "benefits": [{"title": "æºç¨/éçè¿ç°", "benefit_type": "è¿ç°", "category": "åºè¡ææ¸¸", "description": "æºç¨/éçé¢è®¢è¿3%", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": 3.0, "usage_limit": null, "merchant_tags": "æºç¨,éç,ææ¸¸", "id": "cqcb_xi_b1", "card_id": "cqcb_xi", "is_active": true}, {"title": "éåºé¢è®¢ææ£", "benefit_type": "ææ£", "category": "åºè¡ææ¸¸", "description": "åä½éåºé¢è®¢9æï¼å«åè´¹æ©é¤", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": null, "usage_limit": null, "merchant_tags": null, "id": "cqcb_xi_b2", "card_id": "cqcb_xi", "is_active": true}]}, {"bank": "éåºé¶è¡", "name": "éåºé¶è¡é¿æ±å¡", "network": "é¶è", "level": "éå¡", "annual_fee": "åå¹´è´¹", "image_url": "https://webcdn.m.qq.com/ccreward/cards/cqcb_unionpay.png", "description": "éåºåºåç«é/ä¸²ä¸²æ»¡åï¼éç¾/æ°ä¸çºªç¾è´§ä¼æ ", "id": "cqcb_unionpay", "is_active": true, "created_at": "2026-08-05T12:36:47", "benefits": [{"title": "ç«éä¸²ä¸²æ»¡å", "benefit_type": "ææ£", "category": "é¤é¥®ç¾é£", "description": "åä½ç«é/ä¸²ä¸²æ¶è´¹æ»¡150å30", "value_text": null, "points_per_yuan": null, "discount_percent": 20.0, "cashback_percent": null, "usage_limit": null, "merchant_tags": "ç«é,éåº,é¤é¥®", "id": "cqcb_unionpay_b1", "card_id": "cqcb_unionpay", "is_active": true}, {"title": "éç¾/æ°ä¸çºªç¾è´§ä¼æ ", "benefit_type": "ææ£", "category": "è´­ç©æ¶è´¹", "description": "éç¾/æ°ä¸çºªæ»¡200å25", "value_text": null, "points_per_yuan": null, "discount_percent": null, "cashback_percent": null, "usage_limit": null, "merchant_tags": "ç¾è´§,éç¾", "id": "cqcb_unionpay_b2", "card_id": "cqcb_unionpay", "is_active": true}]}]};
+</script>
+</body>
+</html>

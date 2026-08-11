@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>ccreward.cn — 信用卡权益 & 多平台比价</title>
+<link rel="stylesheet" href="style.min.css">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#3b82f6">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="CCReward">
+</head>
+<body>
+
+<div class="header">
+  <div class="header-brand"><span class="logo">💳</span> ccreward.cn</div>
+  <div class="header-stats">
+    <span id="hdr-user" style="cursor:pointer;" onclick="openLoginModal()">👤 登录注册</span>
+    <span id="hdr-cards">📊 --</span>
+    <span id="hdr-banks">🏦 --</span>
+    <span id="hdr-activities">🎫 --</span>
+  </div>
+</div>
+
+<div class="tabs" id="tabs-bar">
+  <div class="tab active" data-tab="wallet">👛 卡包</div>
+  <div class="tab" data-tab="recommend">🎯 推荐</div>
+  <div class="tab" data-tab="deals">🔍 比价</div>
+  <div class="tab" data-tab="offers">🏦 银行优惠</div>
+  <div class="tab" data-tab="cards">💳 权益</div>
+  <div class="tab" data-tab="compare">📊 对比</div>
+  <div class="tab" data-tab="bills">💰 账单</div>
+  <div class="tab" data-tab="reminders">📅 提醒</div>
+  <div class="tab" data-tab="all">📋 活动</div>
+  <div class="tab" data-tab="spending">📊 消费</div>
+  <div class="tab" data-tab="admin" id="tab-admin" style="display:none;">⚙️ 管理</div>
+</div>
+
+<div class="container" id="main-panel"></div>
+
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').then(function(reg) {
+    console.log('SW registered:', reg.scope);
+  }).catch(function(err) {
+    console.log('SW registration failed:', err);
+  });
+}
+</script>
+<script src="app.min.js"></script>
+</body>
+</html>

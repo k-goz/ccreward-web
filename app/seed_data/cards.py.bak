@@ -1,0 +1,765 @@
+"""信用卡与权益种子数据（扩充版）。
+
+数据来源：各行官网/掌上生活/发现精彩等App公开权益信息，人工整理。
+后续可由爬虫自动更新或众包维护。权益细节以银行官方披露为准。
+"""
+from app.models.card import CardNetwork, CardLevel
+from app.models.benefit import BenefitType, BenefitCategory
+
+CARDS = [
+    # ============ 招商银行 (3) ============
+    {
+        "id": "cmb_classic_visa",
+        "bank": "招商银行",
+        "name": "经典版Visa信用卡",
+        "network": CardNetwork.VISA,
+        "level": CardLevel.CLASSIC,
+        "annual_fee": "免首年年费，当年消费6次免次年年费",
+        "description": "招行经典卡，餐饮权益突出，适合日常消费",
+        "image_url": "https://webcdn.m.qq.com/ccreward/cards/cmb_classic_visa.png",
+    },
+    {
+        "id": "cmb_young",
+        "bank": "招商银行",
+        "name": "YOUNG卡（青年版）",
+        "network": CardNetwork.UNIONPAY,
+        "level": CardLevel.CLASSIC,
+        "annual_fee": "免首年年费，消费6次免次年",
+        "description": "30岁以下专属，取现优惠，适合年轻人",
+        "image_url": "https://webcdn.m.qq.com/ccreward/cards/cmb_young.png",
+    },
+    {
+        "id": "cmb_classic_platinum",
+        "bank": "招商银行",
+        "name": "经典版白金信用卡",
+        "network": CardNetwork.VISA,
+        "level": CardLevel.PLATINUM,
+        "annual_fee": "首年800元，消费满20万免次年",
+        "description": "白金卡，含机场贵宾厅、积分加速等权益",
+        "image_url": "https://webcdn.m.qq.com/ccreward/cards/cmb_classic_platinum.png",
+    },
+
+    # ============ 工商银行 (3) ============
+    {
+        "id": "icbc_digital",
+        "bank": "工商银行",
+        "name": "工银无界白金数字信用卡",
+        "network": CardNetwork.UNIONPAY,
+        "level": CardLevel.PLATINUM,
+        "annual_fee": "免年费",
+        "description": "数字信用卡，绑定微信/支付宝消费返现",
+        "image_url": "https://webcdn.m.qq.com/ccreward/cards/icbc_digital.png",
+    },
+    {
+        "id": "icbc_peony",
+        "bank": "工商银行",
+        "name": "牡丹信用卡（金卡）",
+        "network": CardNetwork.UNIONPAY,
+        "level": CardLevel.GOLD,
+        "annual_fee": "首年免，消费5次免次年",
+        "description": "工行经典卡，网点便利",
+        "image_url": "https://webcdn.m.qq.com/ccreward/cards/icbc_peony.png",
+    },
+    {
+        "id": "icbc_xianglong",
+        "bank": "工商银行",
+        "name": "祥龙白金信用卡",
+        "network": CardNetwork.UNIONPAY,
+        "level": CardLevel.PLATINUM,
+        "annual_fee": "首年免，消费12笔或满5万免次年",
+        "description": "龙年主题卡，高铁贵宾厅+积分换里程",
+        "image_url": "https://webcdn.m.qq.com/ccreward/cards/icbc_xianglong.png",
+    },
+
+    # ============ 建设银行 (3) ============
+    {
+        "id": "ccb_global_pay",
+        "bank": "建设银行",
+        "name": "龙卡全球支付信用卡",
+        "network": CardNetwork.VISA,
+        "level": CardLevel.PLATINUM,
+        "annual_fee": "首年免，消费3次免次年",
+        "description": "境外消费返现，海淘友好",
+        "image_url": "https://webcdn.m.qq.com/ccreward/cards/ccb_global_pay.png",
+    },
+    {
+        "id": "ccb_life",
+        "bank": "建设银行",
+        "name": "建行生活卡",
+        "network": CardNetwork.UNIONPAY,
+        "level": CardLevel.CLASSIC,
+        "annual_fee": "免年费",
+        "description": "绑定建行生活App，本地商户优惠",
+        "image_url": "https://webcdn.m.qq.com/ccreward/cards/ccb_life.png",
+    },
+    {
+        "id": "ccb_muse",
+        "bank": "建设银行",
+        "name": "MUSE卡",
+        "network": CardNetwork.VISA,
+        "level": CardLevel.PLATINUM,
+        "annual_fee": "首年免，消费8笔免次年",
+        "description": "网红设计卡面，演出/艺术展览优惠",
+        "image_url": "https://webcdn.m.qq.com/ccreward/cards/ccb_muse.png",
+    },
+
+    # ============ 中信银行 (3) ============
+    {
+        "id": "citic_i_platinum",
+        "bank": "中信银行",
+        "name": "i白金信用卡",
+        "network": CardNetwork.UNIONPAY,
+        "level": CardLevel.PLATINUM,
+        "annual_fee": "首年免，消费12次免次年",
+        "description": "互联网消费返现，9分享权益",
+        "image_url": "https://webcdn.m.qq.com/ccreward/cards/citic_i_platinum.png",
+    },
+    {
+        "id": "citic_yan",
+        "bank": "中信银行",
+        "name": "中信颜卡",
+        "network": CardNetwork.UNIONPAY,
+        "level": CardLevel.GOLD,
+        "annual_fee": "免年费",
+        "description": "高颜值卡，外卖消费积分加倍",
+        "image_url": "https://webcdn.m.qq.com/ccreward/cards/citic_yan.png",
+    },
+    {
+        "id": "citic_huawei",
+        "bank": "中信银行",
+        "name": "华为联名卡",
+        "network": CardNetwork.UNIONPAY,
+        "level": CardLevel.PLATINUM,
+        "annual_fee": "免年费",
+        "description": "华为生态消费返现，华为商城/天际通优惠",
+        "image_url": "https://webcdn.m.qq.com/ccreward/cards/citic_huawei.png",
+    },
+
+    # ============ 平安银行 (2) ============
+    {
+        "id": "pingan_freedom",
+        "bank": "平安银行",
+        "name": "平安由你卡",
+        "network": CardNetwork.UNIONPAY,
+        "level": CardLevel.CLASSIC,
+        "annual_fee": "免年费",
+        "description": "可自定义卡面，积分当钱花",
+        "image_url": "https://webcdn.m.qq.com/ccreward/cards/pingan_freedom.png",
+    },
+    {
+        "id": "pingan_platinum",
+        "bank": "平安银行",
+        "name": "平安标准白金卡",
+        "network": CardNetwork.MASTERCARD,
+        "level": CardLevel.PLATINUM,
+        "annual_fee": "首年2800元",
+        "description": "含道路救援、酒后代驾、机场贵宾厅",
+        "image_url": "https://webcdn.m.qq.com/ccreward/cards/pingan_platinum.png",
+    },
+
+    # ============ 广发银行 (2) ============
+    {
+        "id": "cgb_zhenqing",
+        "bank": "广发银行",
+        "name": "广发真情卡",
+        "network": CardNetwork.UNIONPAY,
+        "level": CardLevel.GOLD,
+        "annual_fee": "免年费",
+        "description": "女性专属，自选商户三倍积分",
+        "image_url": "https://webcdn.m.qq.com/ccreward/cards/cgb_zhenqing.png",
+    },
+    {
+        "id": "cgb_duoli",
+        "bank": "广发银行",
+        "name": "广发多利卡",
+        "network": CardNetwork.UNIONPAY,
+        "level": CardLevel.GOLD,
+        "annual_fee": "首年免，消费12次免次年",
+        "description": "餐饮百货返现，适合日常消费",
+        "image_url": "https://webcdn.m.qq.com/ccreward/cards/cgb_duoli.png",
+    },
+
+    # ============ 浦发银行 (2) ============
+    {
+        "id": "spdb_youth",
+        "bank": "浦发银行",
+        "name": "浦发青春卡",
+        "network": CardNetwork.UNIONPAY,
+        "level": CardLevel.CLASSIC,
+        "annual_fee": "免年费",
+        "description": "35岁以下专属，积分换里程",
+        "image_url": "https://webcdn.m.qq.com/ccreward/cards/spdb_youth.png",
+    },
+    {
+        "id": "spdb_ae_platinum",
+        "bank": "浦发银行",
+        "name": "浦发AE白金卡",
+        "network": CardNetwork.AMEX,
+        "level": CardLevel.PLATINUM,
+        "annual_fee": "首年免，消费达标免次年",
+        "description": "美运白金，含PP贵宾室、酒店权益",
+        "image_url": "https://webcdn.m.qq.com/ccreward/cards/spdb_ae_platinum.png",
+    },
+
+    # ============ 兴业银行 (4) ============
+    {
+        "id": "cib_starry",
+        "bank": "兴业银行",
+        "name": "星夜星辰卡",
+        "network": CardNetwork.UNIONPAY,
+        "level": CardLevel.GOLD,
+        "annual_fee": "免年费",
+        "description": "夜间消费积分加倍，适合夜猫族",
+        "image_url": "https://webcdn.m.qq.com/ccreward/cards/cib_starry.png",
+    },
+    {
+        "id": "cib_pass",
+        "bank": "兴业银行",
+        "name": "兴业pass卡",
+        "network": CardNetwork.VISA,
+        "level": CardLevel.CLASSIC,
+        "annual_fee": "免年费",
+        "description": "出行权益，12306购票优惠",
+        "image_url": "https://webcdn.m.qq.com/ccreward/cards/cib_pass.png",
+    },
+    {
+        "id": "cib_orient",
+        "bank": "兴业银行",
+        "name": "兴业行卡（东方航空联名）",
+        "network": CardNetwork.UNIONPAY,
+        "level": CardLevel.PLATINUM,
+        "annual_fee": "首年免，消费达标免次年",
+        "description": "消费自动兑换东航里程，10:1比例",
+        "image_url": "https://webcdn.m.qq.com/ccreward/cards/cib_orient.png",
+    },
+    {
+        "id": "cib_tao",
+        "bank": "兴业银行",
+        "name": "兴业淘宝联名卡",
+        "network": CardNetwork.UNIONPAY,
+        "level": CardLevel.GOLD,
+        "annual_fee": "免年费",
+        "description": "淘宝/天猫消费返积分，积分抵现",
+        "image_url": "https://webcdn.m.qq.com/ccreward/cards/cib_tao.png",
+    },
+
+    # ============ 民生银行 (2) ============
+    {
+        "id": "cmbc_in",
+        "bank": "民生银行",
+        "name": "民生in卡",
+        "network": CardNetwork.UNIONPAY,
+        "level": CardLevel.CLASSIC,
+        "annual_fee": "免年费",
+        "description": "互联网消费返现，话费充值优惠",
+        "image_url": "https://webcdn.m.qq.com/ccreward/cards/cmbc_in.png",
+    },
+    {
+        "id": "cmbc_elite",
+        "bank": "民生银行",
+        "name": "民生精英白金卡",
+        "network": CardNetwork.UNIONPAY,
+        "level": CardLevel.PLATINUM,
+        "annual_fee": "首年免，消费18笔免次年",
+        "description": "机场贵宾厅、道路救援、酒后代驾",
+        "image_url": "https://webcdn.m.qq.com/ccreward/cards/cmbc_elite.png",
+    },
+
+    # ============ 光大银行 (4) ============
+    {
+        "id": "ceb_douyin",
+        "bank": "光大银行",
+        "name": "光大抖音联名卡",
+        "network": CardNetwork.UNIONPAY,
+        "level": CardLevel.GOLD,
+        "annual_fee": "免年费",
+        "description": "抖音消费返现，新户礼",
+        "image_url": "https://webcdn.m.qq.com/ccreward/cards/ceb_douyin.png",
+    },
+    {
+        "id": "ceb_xiaoxin",
+        "bank": "光大银行",
+        "name": "光大孝心卡",
+        "network": CardNetwork.UNIONPAY,
+        "level": CardLevel.PLATINUM,
+        "annual_fee": "首年免",
+        "description": "孝敬父母主题，体检权益",
+        "image_url": "https://webcdn.m.qq.com/ccreward/cards/ceb_xiaoxin.png",
+    },
+    {
+        "id": "ceb_sunshine",
+        "bank": "光大银行",
+        "name": "光大阳光白金卡",
+        "network": CardNetwork.UNIONPAY,
+        "level": CardLevel.PLATINUM,
+        "annual_fee": "首年免，消费12笔免次年",
+        "description": "光大经典白金卡，含机场贵宾厅、保险、道路救援等权益",
+        "image_url": "https://webcdn.m.qq.com/ccreward/cards/ceb_sunshine.png",
+    },
+    {
+        "id": "ceb_cate",
+        "bank": "光大银行",
+        "name": "光大美食卡",
+        "network": CardNetwork.UNIONPAY,
+        "level": CardLevel.GOLD,
+        "annual_fee": "免年费",
+        "description": "餐饮消费返现1%，合作餐厅5折起",
+        "image_url": "https://webcdn.m.qq.com/ccreward/cards/ceb_cate.png",
+    },
+
+    # ============ 华夏银行 (2) ============
+    {
+        "id": "hxb_elite_platinum",
+        "bank": "华夏银行",
+        "name": "华夏精英白金卡",
+        "network": CardNetwork.UNIONPAY,
+        "level": CardLevel.PLATINUM,
+        "annual_fee": "首年免，消费达标免次年",
+        "description": "含高铁贵宾候车、积分换里程",
+        "image_url": "https://webcdn.m.qq.com/ccreward/cards/hxb_elite_platinum.png",
+    },
+    {
+        "id": "hxb_starbucks",
+        "bank": "华夏银行",
+        "name": "华夏星巴克联名卡",
+        "network": CardNetwork.UNIONPAY,
+        "level": CardLevel.GOLD,
+        "annual_fee": "免年费",
+        "description": "星巴克消费积分加倍，新户赠星巴克券",
+        "image_url": "https://webcdn.m.qq.com/ccreward/cards/hxb_starbucks.png",
+    },
+
+    # ============ 邮储银行 (4) ============
+    {
+        "id": "psbc_ding",
+        "bank": "邮储银行",
+        "name": "邮储鼎卡",
+        "network": CardNetwork.UNIONPAY,
+        "level": CardLevel.GOLD,
+        "annual_fee": "免年费",
+        "description": "普惠卡，本地商户优惠",
+        "image_url": "https://webcdn.m.qq.com/ccreward/cards/psbc_ding.png",
+    },
+    {
+        "id": "psbc_youmi",
+        "bank": "邮储银行",
+        "name": "邮储有米卡",
+        "network": CardNetwork.UNIONPAY,
+        "level": CardLevel.CLASSIC,
+        "annual_fee": "免年费",
+        "description": "县域特色卡，农产品消费优惠",
+        "image_url": "https://webcdn.m.qq.com/ccreward/cards/psbc_youmi.png",
+    },
+    {
+        "id": "psbc_youhui",
+        "bank": "邮储银行",
+        "name": "邮储悦享白金卡",
+        "network": CardNetwork.UNIONPAY,
+        "level": CardLevel.PLATINUM,
+        "annual_fee": "首年免，消费12笔免次年",
+        "description": "含观影优惠、加油满减、超市返现等多重生活权益",
+        "image_url": "https://webcdn.m.qq.com/ccreward/cards/psbc_youhui.png",
+    },
+    {
+        "id": "psbc_travel",
+        "bank": "邮储银行",
+        "name": "邮储旅游卡",
+        "network": CardNetwork.MASTERCARD,
+        "level": CardLevel.GOLD,
+        "annual_fee": "免年费",
+        "description": "境外出游返现1%，境外ATM取现免首笔手续费",
+        "image_url": "https://webcdn.m.qq.com/ccreward/cards/psbc_travel.png",
+    },
+
+    # ============ 交通银行 (2) ============
+    {
+        "id": "bocom_ypower",
+        "bank": "交通银行",
+        "name": "交银Y-power卡",
+        "network": CardNetwork.UNIONPAY,
+        "level": CardLevel.CLASSIC,
+        "annual_fee": "免年费",
+        "description": "35岁以下，取现手续费优惠",
+        "image_url": "https://webcdn.m.qq.com/ccreward/cards/bocom_ypower.png",
+    },
+    {
+        "id": "bocom_whitegold",
+        "bank": "交通银行",
+        "name": "交银白麒麟卡",
+        "network": CardNetwork.MASTERCARD,
+        "level": CardLevel.PLATINUM,
+        "annual_fee": "首年免，消费达标免次年",
+        "description": "机场贵宾厅+积分换里程+酒后代驾",
+        "image_url": "https://webcdn.m.qq.com/ccreward/cards/bocom_whitegold.png",
+    },
+
+    # ============ 农业银行 (3) ============
+    {
+        "id": "abc_pretty",
+        "bank": "农业银行",
+        "name": "漂亮升级卡",
+        "network": CardNetwork.UNIONPAY,
+        "level": CardLevel.GOLD,
+        "annual_fee": "首年免，消费5次免次年",
+        "description": "女性专属，超市返现",
+        "image_url": "https://webcdn.m.qq.com/ccreward/cards/abc_pretty.png",
+    },
+    {
+        "id": "abc_zunran_platinum",
+        "bank": "农业银行",
+        "name": "农行尊然白金卡",
+        "network": CardNetwork.VISA,
+        "level": CardLevel.PLATINUM,
+        "annual_fee": "首年免，消费达标免次年",
+        "description": "含机场贵宾厅、积分换里程",
+        "image_url": "https://webcdn.m.qq.com/ccreward/cards/abc_zunran_platinum.png",
+    },
+    {
+        "id": "abc_qq",
+        "bank": "农业银行",
+        "name": "农行QQ联名卡",
+        "network": CardNetwork.UNIONPAY,
+        "level": CardLevel.GOLD,
+        "annual_fee": "免年费",
+        "description": "QQ消费返现，每月QQ超级会员福利",
+        "image_url": "https://webcdn.m.qq.com/ccreward/cards/abc_qq.png",
+    },
+
+    # ============ 中国银行 (3) ============
+    {
+        "id": "boc_greatwall",
+        "bank": "中国银行",
+        "name": "长城环球通信用卡",
+        "network": CardNetwork.UNIONPAY,
+        "level": CardLevel.GOLD,
+        "annual_fee": "首年免，消费5次免次年",
+        "description": "中行经典卡，境外消费优惠",
+        "image_url": "https://webcdn.m.qq.com/ccreward/cards/boc_greatwall.png",
+    },
+    {
+        "id": "boc_digital",
+        "bank": "中国银行",
+        "name": "中银数字信用卡",
+        "network": CardNetwork.UNIONPAY,
+        "level": CardLevel.PLATINUM,
+        "annual_fee": "免年费",
+        "description": "数字卡，绑定快捷支付返现",
+        "image_url": "https://webcdn.m.qq.com/ccreward/cards/boc_digital.png",
+    },
+    {
+        "id": "boc_zhuoyue",
+        "bank": "中国银行",
+        "name": "中银卓隽卡",
+        "network": CardNetwork.MASTERCARD,
+        "level": CardLevel.PLATINUM,
+        "annual_fee": "免年费",
+        "description": "留学生专属，境外ATM取现免手续费",
+        "image_url": "https://webcdn.m.qq.com/ccreward/cards/boc_zhuoyue.png",
+    },
+
+    # ============ 新增：区域性银行 (13) ============
+    # 江苏银行 (2)
+    {
+        "id": "jsb_unionpay",
+        "bank": "江苏银行",
+        "name": "江苏银行银联金卡",
+        "network": CardNetwork.UNIONPAY,
+        "level": CardLevel.GOLD,
+        "annual_fee": "免年费",
+        "description": "江苏区域商户全覆盖，大润发/苏果满减",
+        "image_url": "https://webcdn.m.qq.com/ccreward/cards/jsb_unionpay.png",
+    },
+    {
+        "id": "jsb_su",
+        "bank": "江苏银行",
+        "name": "江苏银行苏享白金卡",
+        "network": CardNetwork.UNIONPAY,
+        "level": CardLevel.PLATINUM,
+        "annual_fee": "首年免，消费12笔免次年",
+        "description": "苏宁/京东/美团满减优惠，积分兑换苏宁卡",
+        "image_url": "https://webcdn.m.qq.com/ccreward/cards/jsb_su.png",
+    },
+    # 宁波银行 (2)
+    {
+        "id": "nbcb_unionpay",
+        "bank": "宁波银行",
+        "name": "宁波银行汇通卡",
+        "network": CardNetwork.UNIONPAY,
+        "level": CardLevel.GOLD,
+        "annual_fee": "免年费",
+        "description": "宁波及浙江区域商户优惠，银泰百货满减",
+        "image_url": "https://webcdn.m.qq.com/ccreward/cards/nbcb_unionpay.png",
+    },
+    {
+        "id": "nbcb_ocean",
+        "bank": "宁波银行",
+        "name": "宁波银行东海白金卡",
+        "network": CardNetwork.VISA,
+        "level": CardLevel.PLATINUM,
+        "annual_fee": "首年免，消费达标免次年",
+        "description": "境外消费返2%，机场贵宾厅+积分换里程",
+        "image_url": "https://webcdn.m.qq.com/ccreward/cards/nbcb_ocean.png",
+    },
+    # 重庆银行 (2)
+    {
+        "id": "cqcb_unionpay",
+        "bank": "重庆银行",
+        "name": "重庆银行长江卡",
+        "network": CardNetwork.UNIONPAY,
+        "level": CardLevel.GOLD,
+        "annual_fee": "免年费",
+        "description": "重庆区域火锅/串串满减，重百/新世纪百货优惠",
+        "image_url": "https://webcdn.m.qq.com/ccreward/cards/cqcb_unionpay.png",
+    },
+    {
+        "id": "cqcb_xi",
+        "bank": "重庆银行",
+        "name": "重庆银行西旅白金卡",
+        "network": CardNetwork.UNIONPAY,
+        "level": CardLevel.PLATINUM,
+        "annual_fee": "首年免，消费达标免次年",
+        "description": "携程/途牛消费返现，酒店预订折扣",
+        "image_url": "https://webcdn.m.qq.com/ccreward/cards/cqcb_xi.png",
+    },
+    {
+        "id": "bjb_bai",
+        "bank": "北京银行",
+        "name": "北京银行白金卡",
+        "network": CardNetwork.UNIONPAY,
+        "level": CardLevel.PLATINUM,
+        "annual_fee": "首年免，消费12笔免次年",
+        "description": "北京地区专属优惠，线下商户满减活动丰富",
+        "image_url": "https://webcdn.m.qq.com/ccreward/cards/bjb_bai.png",
+    },
+    {
+        "id": "shbank_unionpay",
+        "bank": "上海银行",
+        "name": "上海银行银联标准卡",
+        "network": CardNetwork.UNIONPAY,
+        "level": CardLevel.GOLD,
+        "annual_fee": "免年费",
+        "description": "江浙沪地区商户优惠，外卖满减",
+        "image_url": "https://webcdn.m.qq.com/ccreward/cards/shbank_unionpay.png",
+    },
+    {
+        "id": "gzcb_unionpay",
+        "bank": "广州银行",
+        "name": "广州银行银联金卡",
+        "network": CardNetwork.UNIONPAY,
+        "level": CardLevel.GOLD,
+        "annual_fee": "免年费",
+        "description": "粤港澳大湾区特色，餐饮消费返现",
+        "image_url": "https://webcdn.m.qq.com/ccreward/cards/gzcb_unionpay.png",
+    },
+    {
+        "id": "hzcb_xihu",
+        "bank": "杭州银行",
+        "name": "杭州银行西湖卡",
+        "network": CardNetwork.UNIONPAY,
+        "level": CardLevel.CLASSIC,
+        "annual_fee": "免年费",
+        "description": "杭州/浙江区域商户优惠，支付宝消费返现",
+        "image_url": "https://webcdn.m.qq.com/ccreward/cards/hzcb_xihu.png",
+    },
+    {
+        "id": "njcb_unionpay",
+        "bank": "南京银行",
+        "name": "南京银行鑫梅花卡",
+        "network": CardNetwork.UNIONPAY,
+        "level": CardLevel.GOLD,
+        "annual_fee": "免年费",
+        "description": "江苏区域商户优惠，苏果超市满减",
+        "image_url": "https://webcdn.m.qq.com/ccreward/cards/njcb_unionpay.png",
+    },
+    {
+        "id": "cdcb_shu",
+        "bank": "成都银行",
+        "name": "成都银行蜀道卡",
+        "network": CardNetwork.UNIONPAY,
+        "level": CardLevel.GOLD,
+        "annual_fee": "免年费",
+        "description": "成都区域美食优惠，火锅/串串8折起",
+        "image_url": "https://webcdn.m.qq.com/ccreward/cards/cdcb_shu.png",
+    },
+    {
+        "id": "szpa_unionpay",
+        "bank": "深圳农商银行",
+        "name": "深圳农商银行钻卡",
+        "network": CardNetwork.UNIONPAY,
+        "level": CardLevel.CLASSIC,
+        "annual_fee": "免年费",
+        "description": "深圳地区便利店/地铁优惠",
+        "image_url": "https://webcdn.m.qq.com/ccreward/cards/szpa_unionpay.png",
+    },
+    {
+        "id": "suzbc_unionpay",
+        "bank": "苏州银行",
+        "name": "苏州银行姑苏卡",
+        "network": CardNetwork.UNIONPAY,
+        "level": CardLevel.CLASSIC,
+        "annual_fee": "免年费",
+        "description": "苏州/长三角区域消费优惠",
+        "image_url": "https://webcdn.m.qq.com/ccreward/cards/suzbc_unionpay.png",
+    },
+]
+
+# 原有权益 + 新增权益
+BENEFITS = [
+    {"id": "cmb_classic_b1", "card_id": "cmb_classic_visa", "title": "餐饮消费积分累积", "benefit_type": BenefitType.POINTS, "category": BenefitCategory.DINING, "description": "餐饮类消费每20元积1分，积分可兑换星巴克、瑞幸等饮品", "points_per_yuan": 0.05, "usage_limit": "无上限", "merchant_tags": "餐饮,美食,外卖"},
+    {"id": "cmb_classic_b2", "card_id": "cmb_classic_visa", "title": "星巴克买一赠一", "benefit_type": BenefitType.BUY_ONE_GET_ONE, "category": BenefitCategory.COFFEE, "description": "每周三星巴克指定饮品买一赠一", "value_text": "买一赠一", "usage_limit": "每周三，每卡每月限2次", "merchant_tags": "星巴克,咖啡"},
+    {"id": "cmb_classic_b3", "card_id": "cmb_classic_visa", "title": "美食半价", "benefit_type": BenefitType.DISCOUNT, "category": BenefitCategory.DINING, "description": "每周三/周六指定餐厅5折优惠", "discount_percent": 50.0, "usage_limit": "每周三、周六，掌上生活App领取", "merchant_tags": "餐饮,美食"},
+    {"id": "cmb_classic_b4", "card_id": "cmb_classic_visa", "title": "线上消费返积分", "benefit_type": BenefitType.POINTS, "category": BenefitCategory.ONLINE, "description": "支付宝/微信绑卡消费，每20元积1分", "points_per_yuan": 0.05, "merchant_tags": "支付宝,微信,线上"},
+
+    {"id": "cmb_young_b1", "card_id": "cmb_young", "title": "取现手续费优惠", "benefit_type": BenefitType.DISCOUNT, "category": BenefitCategory.GENERAL, "description": "境内取现每笔手续费减半", "discount_percent": 50.0, "usage_limit": "每卡每月首笔免"},
+    {"id": "cmb_young_b2", "card_id": "cmb_young", "title": "新户首刷礼", "benefit_type": BenefitType.FREE_GIFT, "category": BenefitCategory.GENERAL, "description": "新户首刷达标送拉杆箱或积分"},
+    {"id": "cmb_young_b3", "card_id": "cmb_young", "title": "瑞幸咖啡优惠", "benefit_type": BenefitType.DISCOUNT, "category": BenefitCategory.COFFEE, "description": "瑞幸咖啡满20减10", "discount_percent": 50.0, "usage_limit": "每卡每月2次", "merchant_tags": "瑞幸,咖啡"},
+
+    {"id": "cmb_platinum_b1", "card_id": "cmb_classic_platinum", "title": "机场贵宾厅", "benefit_type": BenefitType.LOUNGE, "category": BenefitCategory.TRAVEL, "description": "全球机场贵宾厅无限次", "usage_limit": "需出示白金卡"},
+    {"id": "cmb_platinum_b2", "card_id": "cmb_classic_platinum", "title": "积分加速", "benefit_type": BenefitType.POINTS, "category": BenefitCategory.GENERAL, "description": "消费积分1.5倍加速", "points_per_yuan": 0.075},
+    {"id": "cmb_platinum_b3", "card_id": "cmb_classic_platinum", "title": "滴滴打车优惠", "benefit_type": BenefitType.DISCOUNT, "category": BenefitCategory.TRAVEL, "description": "滴滴打车每周2次8折", "discount_percent": 20.0, "usage_limit": "每卡每周2次", "merchant_tags": "滴滴,出行"},
+
+    {"id": "icbc_digital_b1", "card_id": "icbc_digital", "title": "微信/支付宝消费返现", "benefit_type": BenefitType.CASHBACK, "category": BenefitCategory.ONLINE, "description": "绑定微信/支付宝消费返1%", "cashback_percent": 1.0, "usage_limit": "每月上限100元"},
+    {"id": "icbc_digital_b2", "card_id": "icbc_digital", "title": "新户消费达标返现", "benefit_type": BenefitType.CASHBACK, "category": BenefitCategory.GENERAL, "description": "新户首月消费满1000返50元", "cashback_percent": 5.0},
+
+    {"id": "icbc_peony_b1", "card_id": "icbc_peony", "title": "积分累积", "benefit_type": BenefitType.POINTS, "category": BenefitCategory.GENERAL, "description": "消费1元积1分", "points_per_yuan": 1.0},
+
+    {"id": "icbc_xianglong_b1", "card_id": "icbc_xianglong", "title": "高铁贵宾厅", "benefit_type": BenefitType.LOUNGE, "category": BenefitCategory.TRAVEL, "description": "全国主要高铁站贵宾候车室免费", "usage_limit": "每卡每年12次"},
+    {"id": "icbc_xianglong_b2", "card_id": "icbc_xianglong", "title": "积分换礼品", "benefit_type": BenefitType.POINTS, "category": BenefitCategory.GENERAL, "description": "积分兑换电子产品、旅行用品", "points_per_yuan": 1.0},
+
+    {"id": "ccb_global_b1", "card_id": "ccb_global_pay", "title": "境外消费返现", "benefit_type": BenefitType.CASHBACK, "category": BenefitCategory.TRAVEL, "description": "境外消费返1%现", "cashback_percent": 1.0, "usage_limit": "每月上限500元"},
+    {"id": "ccb_global_b2", "card_id": "ccb_global_pay", "title": "海淘积分加速", "benefit_type": BenefitType.POINTS, "category": BenefitCategory.ONLINE, "description": "指定海淘商户2倍积分", "points_per_yuan": 2.0},
+
+    {"id": "ccb_life_b1", "card_id": "ccb_life", "title": "本地商户优惠", "benefit_type": BenefitType.DISCOUNT, "category": BenefitCategory.DINING, "description": "建行生活App本地商户专属折扣", "merchant_tags": "本地,餐饮,超市"},
+    {"id": "ccb_life_b2", "card_id": "ccb_life", "title": "外卖满减", "benefit_type": BenefitType.DISCOUNT, "category": BenefitCategory.DINING, "description": "美团/饿了么外卖满30减5~10", "merchant_tags": "美团,饿了么,外卖"},
+
+    {"id": "ccb_muse_b1", "card_id": "ccb_muse", "title": "演出购票优惠", "benefit_type": BenefitType.DISCOUNT, "category": BenefitCategory.ENTERTAINMENT, "description": "大麦/猫眼购票9折", "discount_percent": 10.0, "usage_limit": "每月2次", "merchant_tags": "演出,大麦,猫眼"},
+    {"id": "ccb_muse_b2", "card_id": "ccb_muse", "title": "艺术展览优惠", "benefit_type": BenefitType.DISCOUNT, "category": BenefitCategory.ENTERTAINMENT, "description": "合作美术馆/博物馆门票折扣", "discount_percent": 20.0},
+
+    {"id": "citic_i_b1", "card_id": "citic_i_platinum", "title": "互联网消费返现", "benefit_type": BenefitType.CASHBACK, "category": BenefitCategory.ONLINE, "description": "指定互联网商户消费返现", "cashback_percent": 2.0, "usage_limit": "每月上限100元"},
+    {"id": "citic_i_b2", "card_id": "citic_i_platinum", "title": "9分享权益", "benefit_type": BenefitType.DISCOUNT, "category": BenefitCategory.GENERAL, "description": "9积分兑换星巴克、瑞幸等饮品", "value_text": "9积分兑换", "usage_limit": "每月1次"},
+
+    {"id": "citic_yan_b1", "card_id": "citic_yan", "title": "外卖积分加倍", "benefit_type": BenefitType.POINTS, "category": BenefitCategory.DINING, "description": "美团/饿了么外卖消费2倍积分", "points_per_yuan": 2.0, "merchant_tags": "美团,饿了么,外卖"},
+
+    {"id": "citic_huawei_b1", "card_id": "citic_huawei", "title": "华为商城返现", "benefit_type": BenefitType.CASHBACK, "category": BenefitCategory.ONLINE, "description": "华为商城消费返2%", "cashback_percent": 2.0, "usage_limit": "每月上限100元", "merchant_tags": "华为"},
+    {"id": "citic_huawei_b2", "card_id": "citic_huawei", "title": "天际通流量优惠", "benefit_type": BenefitType.DISCOUNT, "category": BenefitCategory.TRAVEL, "description": "天际通全球流量8折", "merchant_tags": "华为,出行"},
+
+    {"id": "pingan_freedom_b1", "card_id": "pingan_freedom", "title": "积分当钱花", "benefit_type": BenefitType.POINTS, "category": BenefitCategory.GENERAL, "description": "积分可直接抵扣消费，1积分=1分钱"},
+    {"id": "pingan_freedom_b2", "card_id": "pingan_freedom", "title": "自定义卡面", "benefit_type": BenefitType.OTHER, "category": BenefitCategory.GENERAL, "description": "可上传自定义卡面图片"},
+
+    {"id": "pingan_platinum_b1", "card_id": "pingan_platinum", "title": "道路救援", "benefit_type": BenefitType.PRIORITY, "category": BenefitCategory.TRAVEL, "description": "全国免费道路救援，每年3次"},
+    {"id": "pingan_platinum_b2", "card_id": "pingan_platinum", "title": "酒后代驾", "benefit_type": BenefitType.FREE_GIFT, "category": BenefitCategory.GENERAL, "description": "每年6次免费酒后代驾"},
+    {"id": "pingan_platinum_b3", "card_id": "pingan_platinum", "title": "机场贵宾厅", "benefit_type": BenefitType.LOUNGE, "category": BenefitCategory.TRAVEL, "description": "全球机场贵宾厅无限次"},
+
+    {"id": "cgb_zhenqing_b1", "card_id": "cgb_zhenqing", "title": "自选商户三倍积分", "benefit_type": BenefitType.POINTS, "category": BenefitCategory.SHOPPING, "description": "自选1类商户消费3倍积分", "points_per_yuan": 3.0, "usage_limit": "每月上限1万分"},
+
+    {"id": "cgb_duoli_b1", "card_id": "cgb_duoli", "title": "餐饮百货返现", "benefit_type": BenefitType.CASHBACK, "category": BenefitCategory.DINING, "description": "餐饮、百货消费返1%", "cashback_percent": 1.0, "usage_limit": "每月上限50元"},
+
+    {"id": "spdb_youth_b1", "card_id": "spdb_youth", "title": "积分换里程", "benefit_type": BenefitType.POINTS, "category": BenefitCategory.TRAVEL, "description": "12积分兑换1东航里程", "merchant_tags": "东航,国航,南航"},
+
+    {"id": "spdb_ae_b1", "card_id": "spdb_ae_platinum", "title": "PP贵宾室", "benefit_type": BenefitType.LOUNGE, "category": BenefitCategory.TRAVEL, "description": "Priority Pass全球贵宾室每年8次免费"},
+    {"id": "spdb_ae_b2", "card_id": "spdb_ae_platinum", "title": "酒店权益", "benefit_type": BenefitType.DISCOUNT, "category": BenefitCategory.TRAVEL, "description": "指定酒店住3付2、免费早餐"},
+
+    {"id": "cib_starry_b1", "card_id": "cib_starry", "title": "夜间积分加倍", "benefit_type": BenefitType.POINTS, "category": BenefitCategory.ENTERTAINMENT, "description": "22:00-06:00消费2倍积分", "points_per_yuan": 2.0, "usage_limit": "夜间时段"},
+
+    {"id": "cib_pass_b1", "card_id": "cib_pass", "title": "12306购票优惠", "benefit_type": BenefitType.DISCOUNT, "category": BenefitCategory.TRAVEL, "description": "12306购票随机立减", "merchant_tags": "12306,火车"},
+
+    {"id": "cmbc_in_b1", "card_id": "cmbc_in", "title": "互联网消费返现", "benefit_type": BenefitType.CASHBACK, "category": BenefitCategory.ONLINE, "description": "指定互联网商户返现", "cashback_percent": 1.0},
+    {"id": "cmbc_in_b2", "card_id": "cmbc_in", "title": "话费充值优惠", "benefit_type": BenefitType.DISCOUNT, "category": BenefitCategory.BILL, "description": "话费充值随机立减"},
+
+    {"id": "cmbc_elite_b1", "card_id": "cmbc_elite", "title": "机场贵宾厅", "benefit_type": BenefitType.LOUNGE, "category": BenefitCategory.TRAVEL, "description": "全球机场贵宾厅每年12次"},
+    {"id": "cmbc_elite_b2", "card_id": "cmbc_elite", "title": "道路救援", "benefit_type": BenefitType.PRIORITY, "category": BenefitCategory.TRAVEL, "description": "全国24小时道路救援，每年3次"},
+    {"id": "cmbc_elite_b3", "card_id": "cmbc_elite", "title": "酒后代驾", "benefit_type": BenefitType.FREE_GIFT, "category": BenefitCategory.GENERAL, "description": "每年4次酒后代驾"},
+
+    {"id": "ceb_douyin_b1", "card_id": "ceb_douyin", "title": "抖音消费返现", "benefit_type": BenefitType.CASHBACK, "category": BenefitCategory.ONLINE, "description": "抖音消费返2%现", "cashback_percent": 2.0, "usage_limit": "每月上限50元", "merchant_tags": "抖音"},
+
+    {"id": "ceb_xiaoxin_b1", "card_id": "ceb_xiaoxin", "title": "免费体检", "benefit_type": BenefitType.FREE_GIFT, "category": BenefitCategory.GENERAL, "description": "每年1次免费体检套餐"},
+
+    {"id": "hxb_platinum_b1", "card_id": "hxb_elite_platinum", "title": "高铁贵宾候车", "benefit_type": BenefitType.PRIORITY, "category": BenefitCategory.TRAVEL, "description": "高铁站贵宾候车室免费", "merchant_tags": "高铁,12306"},
+    {"id": "hxb_platinum_b2", "card_id": "hxb_elite_platinum", "title": "积分换里程", "benefit_type": BenefitType.POINTS, "category": BenefitCategory.TRAVEL, "description": "16积分兑1里程"},
+
+    {"id": "hxb_starbucks_b1", "card_id": "hxb_starbucks", "title": "星巴克积分加倍", "benefit_type": BenefitType.POINTS, "category": BenefitCategory.COFFEE, "description": "星巴克消费3倍积分", "points_per_yuan": 3.0, "merchant_tags": "星巴克,咖啡"},
+    {"id": "hxb_starbucks_b2", "card_id": "hxb_starbucks", "title": "新户赠星巴克券", "benefit_type": BenefitType.FREE_GIFT, "category": BenefitCategory.COFFEE, "description": "新户首刷达标赠星巴克饮品券×2", "merchant_tags": "星巴克,咖啡"},
+
+    {"id": "psbc_ding_b1", "card_id": "psbc_ding", "title": "本地商户优惠", "benefit_type": BenefitType.DISCOUNT, "category": BenefitCategory.GENERAL, "description": "本地合作商户消费折扣"},
+    {"id": "psbc_youmi_b1", "card_id": "psbc_youmi", "title": "农产品优惠", "benefit_type": BenefitType.DISCOUNT, "category": BenefitCategory.GROCERY, "description": "合作农产品商户满减优惠", "merchant_tags": "农产品,超市"},
+
+    {"id": "bocom_ypower_b1", "card_id": "bocom_ypower", "title": "取现手续费优惠", "benefit_type": BenefitType.DISCOUNT, "category": BenefitCategory.GENERAL, "description": "境内取现每笔5元", "usage_limit": "35岁以下专属"},
+
+    {"id": "bocom_whitegold_b1", "card_id": "bocom_whitegold", "title": "机场贵宾厅", "benefit_type": BenefitType.LOUNGE, "category": BenefitCategory.TRAVEL, "description": "全球机场贵宾厅每年6次"},
+    {"id": "bocom_whitegold_b2", "card_id": "bocom_whitegold", "title": "积分换里程", "benefit_type": BenefitType.POINTS, "category": BenefitCategory.TRAVEL, "description": "18积分兑1里程，三大航通用"},
+    {"id": "bocom_whitegold_b3", "card_id": "bocom_whitegold", "title": "酒后代驾", "benefit_type": BenefitType.FREE_GIFT, "category": BenefitCategory.GENERAL, "description": "每年6次免费酒后代驾"},
+
+    {"id": "abc_pretty_b1", "card_id": "abc_pretty", "title": "超市返现", "benefit_type": BenefitType.CASHBACK, "category": BenefitCategory.GROCERY, "description": "超市消费返1%现", "cashback_percent": 1.0, "usage_limit": "每月上限30元", "merchant_tags": "超市,沃尔玛,大润发"},
+
+    {"id": "abc_platinum_b1", "card_id": "abc_zunran_platinum", "title": "机场贵宾厅", "benefit_type": BenefitType.LOUNGE, "category": BenefitCategory.TRAVEL, "description": "国内机场贵宾厅每年12次免费"},
+    {"id": "abc_platinum_b2", "card_id": "abc_zunran_platinum", "title": "积分换里程", "benefit_type": BenefitType.POINTS, "category": BenefitCategory.TRAVEL, "description": "15积分兑1里程"},
+
+    {"id": "abc_qq_b1", "card_id": "abc_qq", "title": "QQ消费返现", "benefit_type": BenefitType.CASHBACK, "category": BenefitCategory.ONLINE, "description": "QQ钱包支付返1%", "cashback_percent": 1.0, "usage_limit": "每月上限30元"},
+    {"id": "abc_qq_b2", "card_id": "abc_qq", "title": "QQ会员福利", "benefit_type": BenefitType.FREE_GIFT, "category": BenefitCategory.ONLINE, "description": "每月达标赠送QQ超级会员", "merchant_tags": "QQ,腾讯"},
+
+    {"id": "boc_greatwall_b1", "card_id": "boc_greatwall", "title": "境外消费优惠", "benefit_type": BenefitType.DISCOUNT, "category": BenefitCategory.TRAVEL, "description": "境外消费返积分加倍", "points_per_yuan": 2.0},
+
+    {"id": "boc_digital_b1", "card_id": "boc_digital", "title": "快捷支付返现", "benefit_type": BenefitType.CASHBACK, "category": BenefitCategory.ONLINE, "description": "绑定快捷支付消费返现", "cashback_percent": 1.0, "usage_limit": "每月上限50元"},
+
+    {"id": "boc_zhuoyue_b1", "card_id": "boc_zhuoyue", "title": "境外ATM取现免手续费", "benefit_type": BenefitType.DISCOUNT, "category": BenefitCategory.TRAVEL, "description": "境外ATM取现每月前3笔免手续费"},
+    {"id": "boc_zhuoyue_b2", "card_id": "boc_zhuoyue", "title": "留学缴费优惠", "benefit_type": BenefitType.DISCOUNT, "category": BenefitCategory.ONLINE, "description": "指定留学缴费平台手续费减免", "merchant_tags": "留学,教育"},
+
+    # 区域性银行权益
+    {"id": "bjb_bai_b1", "card_id": "bjb_bai", "title": "线下商户满减", "benefit_type": BenefitType.DISCOUNT, "category": BenefitCategory.DINING, "description": "北京地区合作餐饮商户满100减20", "discount_percent": 20.0, "merchant_tags": "北京,本地,餐饮"},
+    {"id": "bjb_bai_b2", "card_id": "bjb_bai", "title": "电影票优惠", "benefit_type": BenefitType.DISCOUNT, "category": BenefitCategory.ENTERTAINMENT, "description": "猫眼电影购票立减10元", "usage_limit": "每月2次"},
+
+    {"id": "shbank_b1", "card_id": "shbank_unionpay", "title": "江浙沪商户优惠", "benefit_type": BenefitType.DISCOUNT, "category": BenefitCategory.DINING, "description": "江浙沪合作餐饮消费满减", "merchant_tags": "上海,江浙,餐饮"},
+    {"id": "shbank_b2", "card_id": "shbank_unionpay", "title": "外卖满减", "benefit_type": BenefitType.DISCOUNT, "category": BenefitCategory.DINING, "description": "美团/饿了么外卖满30减8", "merchant_tags": "外卖,美团,饿了么"},
+
+    {"id": "gzcb_b1", "card_id": "gzcb_unionpay", "title": "大湾区餐饮返现", "benefit_type": BenefitType.CASHBACK, "category": BenefitCategory.DINING, "description": "合作餐饮消费返2%", "cashback_percent": 2.0, "merchant_tags": "广东,餐饮"},
+
+    {"id": "hzcb_b1", "card_id": "hzcb_xihu", "title": "支付宝消费返现", "benefit_type": BenefitType.CASHBACK, "category": BenefitCategory.ONLINE, "description": "支付宝消费返0.5%", "cashback_percent": 0.5, "merchant_tags": "支付宝"},
+
+    {"id": "njcb_b1", "card_id": "njcb_unionpay", "title": "苏果超市满减", "benefit_type": BenefitType.DISCOUNT, "category": BenefitCategory.GROCERY, "description": "苏果超市满100减15", "discount_percent": 15.0, "merchant_tags": "超市,苏果"},
+
+    {"id": "cdcb_b1", "card_id": "cdcb_shu", "title": "火锅串串折扣", "benefit_type": BenefitType.DISCOUNT, "category": BenefitCategory.DINING, "description": "成都合作火锅/串串店8折起", "discount_percent": 20.0, "usage_limit": "每卡每月4次", "merchant_tags": "成都,火锅,餐饮"},
+
+    {"id": "szpa_b1", "card_id": "szpa_unionpay", "title": "便利店优惠", "benefit_type": BenefitType.DISCOUNT, "category": BenefitCategory.GROCERY, "description": "全家/美宜佳消费满15减3", "merchant_tags": "便利店"},
+    {"id": "szpa_b2", "card_id": "szpa_unionpay", "title": "地铁出行优惠", "benefit_type": BenefitType.CASHBACK, "category": BenefitCategory.TRAVEL, "description": "深圳通充值返5%", "cashback_percent": 5.0, "merchant_tags": "出行,地铁"},
+
+    {"id": "suzbc_b1", "card_id": "suzbc_unionpay", "title": "长三角消费优惠", "benefit_type": BenefitType.DISCOUNT, "category": BenefitCategory.DINING, "description": "苏州/长三角合作餐饮满减", "merchant_tags": "苏州,长三角,餐饮"},
+
+    # === 新增卡片权益 ===
+    # 兴业银行新增
+    {"id": "cib_orient_b1", "card_id": "cib_orient", "title": "自动兑换东航里程", "benefit_type": BenefitType.POINTS, "category": BenefitCategory.TRAVEL, "description": "消费10元自动兑换1东航里程，月上限500里程", "points_per_yuan": 0.1, "merchant_tags": "东航,里程"},
+    {"id": "cib_orient_b2", "card_id": "cib_orient", "title": "机场贵宾厅", "benefit_type": BenefitType.LOUNGE, "category": BenefitCategory.TRAVEL, "description": "国内主要机场贵宾厅每年6次"},
+    {"id": "cib_tao_b1", "card_id": "cib_tao", "title": "淘宝天猫积分加倍", "benefit_type": BenefitType.POINTS, "category": BenefitCategory.ONLINE, "description": "淘宝/天猫消费2倍积分", "points_per_yuan": 2.0, "merchant_tags": "淘宝,天猫"},
+    {"id": "cib_tao_b2", "card_id": "cib_tao", "title": "积分抵现", "benefit_type": BenefitType.POINTS, "category": BenefitCategory.ONLINE, "description": "500积分抵1元，淘宝/天猫下单时自动抵扣", "value_text": "500积分=1元"},
+
+    # 光大银行新增
+    {"id": "ceb_sunshine_b1", "card_id": "ceb_sunshine", "title": "机场贵宾厅", "benefit_type": BenefitType.LOUNGE, "category": BenefitCategory.TRAVEL, "description": "全国机场/高铁站贵宾厅每年8次"},
+    {"id": "ceb_sunshine_b2", "card_id": "ceb_sunshine", "title": "出行保险", "benefit_type": BenefitType.PRIORITY, "category": BenefitCategory.TRAVEL, "description": "含航空意外险500万、航班延误险"},
+    {"id": "ceb_sunshine_b3", "card_id": "ceb_sunshine", "title": "道路救援", "benefit_type": BenefitType.PRIORITY, "category": BenefitCategory.TRAVEL, "description": "全国24小时道路救援，每年3次"},
+    {"id": "ceb_cate_b1", "card_id": "ceb_cate", "title": "餐饮返现", "benefit_type": BenefitType.CASHBACK, "category": BenefitCategory.DINING, "description": "餐饮消费返1%现，每月上限50元", "cashback_percent": 1.0, "usage_limit": "每月上限50元"},
+    {"id": "ceb_cate_b2", "card_id": "ceb_cate", "title": "合作餐厅5折", "benefit_type": BenefitType.DISCOUNT, "category": BenefitCategory.DINING, "description": "光大美食商户平台合作餐厅最低5折", "discount_percent": 50.0},
+
+    # 邮储银行新增
+    {"id": "psbc_youhui_b1", "card_id": "psbc_youhui", "title": "观影优惠", "benefit_type": BenefitType.DISCOUNT, "category": BenefitCategory.ENTERTAINMENT, "description": "猫眼/淘票票购票9元起", "merchant_tags": "猫眼,淘票票,电影"},
+    {"id": "psbc_youhui_b2", "card_id": "psbc_youhui", "title": "加油满减", "benefit_type": BenefitType.DISCOUNT, "category": BenefitCategory.TRAVEL, "description": "中石化/中石油加油满200减20", "discount_percent": 10.0, "merchant_tags": "加油,中石化,中石油"},
+    {"id": "psbc_youhui_b3", "card_id": "psbc_youhui", "title": "超市返现", "benefit_type": BenefitType.CASHBACK, "category": BenefitCategory.GROCERY, "description": "指定超市消费返1%", "cashback_percent": 1.0, "merchant_tags": "超市"},
+    {"id": "psbc_travel_b1", "card_id": "psbc_travel", "title": "境外消费返现", "benefit_type": BenefitType.CASHBACK, "category": BenefitCategory.TRAVEL, "description": "境外消费返1%，每月上限200元", "cashback_percent": 1.0, "usage_limit": "每月上限200元"},
+    {"id": "psbc_travel_b2", "card_id": "psbc_travel", "title": "境外ATM取现优惠", "benefit_type": BenefitType.DISCOUNT, "category": BenefitCategory.TRAVEL, "description": "境外ATM取现每月首笔免手续费"},
+
+    # 江苏银行
+    {"id": "jsb_unionpay_b1", "card_id": "jsb_unionpay", "title": "大润发/苏果满减", "benefit_type": BenefitType.DISCOUNT, "category": BenefitCategory.GROCERY, "description": "大润发/苏果消费满100减政策15", "discount_percent": 15.0, "merchant_tags": "超市,大润发,苏果"},
+    {"id": "jsb_su_b1", "card_id": "jsb_su", "title": "苏宁/京东满减", "benefit_type": BenefitType.DISCOUNT, "category": BenefitCategory.ONLINE, "description": "苏宁/京东消费满200减20", "discount_percent": 10.0, "merchant_tags": "苏宁,京东"},
+    {"id": "jsb_su_b2", "card_id": "jsb_su", "title": "积分兑苏宁卡", "benefit_type": BenefitType.POINTS, "category": BenefitCategory.SHOPPING, "description": "10000积分兑换100元苏宁卡", "value_text": "10000积分=100元"},
+    {"id": "jsb_su_b3", "card_id": "jsb_su", "title": "美团满减", "benefit_type": BenefitType.DISCOUNT, "category": BenefitCategory.DINING, "description": "美团外卖满30减8", "merchant_tags": "美团,外卖"},
+
+    # 宁波银行
+    {"id": "nbcb_unionpay_b1", "card_id": "nbcb_unionpay", "title": "银泰百货满减", "benefit_type": BenefitType.DISCOUNT, "category": BenefitCategory.SHOPPING, "description": "银泰百货消费满500减50", "discount_percent": 10.0, "merchant_tags": "银泰,百货"},
+    {"id": "nbcb_unionpay_b2", "card_id": "nbcb_unionpay", "title": "浙江区域餐饮优惠", "benefit_type": BenefitType.DISCOUNT, "category": BenefitCategory.DINING, "description": "浙江合作餐饮消费满减，每月4次", "merchant_tags": "浙江,餐饮"},
+    {"id": "nbcb_ocean_b1", "card_id": "nbcb_ocean", "title": "境外消费返现", "benefit_type": BenefitType.CASHBACK, "category": BenefitCategory.TRAVEL, "description": "境外消费返2%，每月上限300元", "cashback_percent": 2.0, "usage_limit": "每月上限300元"},
+    {"id": "nbcb_ocean_b2", "card_id": "nbcb_ocean", "title": "积分换里程", "benefit_type": BenefitType.POINTS, "category": BenefitCategory.TRAVEL, "description": "15积分兑1里程，三大航通用"},
+
+    # 重庆银行
+    {"id": "cqcb_unionpay_b1", "card_id": "cqcb_unionpay", "title": "火锅串串满减", "benefit_type": BenefitType.DISCOUNT, "category": BenefitCategory.DINING, "description": "合作火锅/串串消费满150减30", "discount_percent": 20.0, "merchant_tags": "火锅,重庆,餐饮"},
+    {"id": "cqcb_unionpay_b2", "card_id": "cqcb_unionpay", "title": "重百/新世纪百货优惠", "benefit_type": BenefitType.DISCOUNT, "category": BenefitCategory.SHOPPING, "description": "重百/新世纪满200减25", "merchant_tags": "百货,重百"},
+    {"id": "cqcb_xi_b1", "card_id": "cqcb_xi", "title": "携程/途牛返现", "benefit_type": BenefitType.CASHBACK, "category": BenefitCategory.TRAVEL, "description": "携程/途牛预订返3%", "cashback_percent": 3.0, "merchant_tags": "携程,途牛,旅游"},
+    {"id": "cqcb_xi_b2", "card_id": "cqcb_xi", "title": "酒店预订折扣", "benefit_type": BenefitType.DISCOUNT, "category": BenefitCategory.TRAVEL, "description": "合作酒店预订9折，含免费早餐"},
+]

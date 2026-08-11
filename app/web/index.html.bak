@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>ccreward.cn — 信用卡权益 & 多平台比价</title>
+<style>
+:root {
+  --primary: #1677ff;
+  --primary-light: #e6f4ff;
+  --success: #52c41a;
+  --warning: #faad14;
+  --danger: #ff4d4f;
+  --text: #1f1f1f;
+  --text-secondary: #666;
+  --border: #f0f0f0;
+  --bg: #f7f8fa;
+  --card-bg: #fff;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; background:var(--bg); color:var(--text); line-height:1.6; }
+.header { background:linear-gradient(135deg,#1677ff,#0958d9); color:#fff; padding:12px 16px 16px; position:sticky; top:0; z-index:100; box-shadow:0 2px 12px rgba(22,119,255,0.25); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; }
+.header-brand { font-size:18px; font-weight:700; display:flex; align-items:center; gap:8px; }
+.header-brand .logo { font-size:24px; }
+.header-stats { display:flex; gap:16px; font-size:12px; opacity:0.85; }
+.tabs { display:flex; gap:4px; margin:0 auto; max-width:800px; padding:12px 8px; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; border-bottom:1px solid var(--border); background:var(--card-bg); }
+.tabs::-webkit-scrollbar { display:none; }
+.tab { flex-shrink:0; padding:8px 14px; text-align:center; border-radius:8px; cursor:pointer; font-size:13px; font-weight:500; color:var(--text-secondary); transition:all .2s; display:flex; align-items:center; justify-content:center; gap:4px; white-space:nowrap; }
+.tab.active { background:var(--primary); color:#fff; }
+.container { max-width:800px; margin:0 auto; padding:16px; }
+.card { background:var(--card-bg); border-radius:var(--radius); padding:16px; margin-bottom:12px; box-shadow:var(--shadow); }
+.card-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px; }
+.card-title { font-size:16px; font-weight:600; }
+.card-meta { font-size:12px; color:var(--text-secondary); }
+.tag { display:inline-block; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:500; }
+.tag-blue { background:var(--primary-light); color:var(--primary); }
+.tag-green { background:#f6ffed; color:var(--success); }
+.tag-orange { background:#fff7e6; color:var(--warning); }
+.tag-red { background:#fff1f0; color:var(--danger); }
+.stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:16px; }
+.stat-card { background:var(--card-bg); border-radius:var(--radius); padding:16px; text-align:center; box-shadow:var(--shadow); }
+.stat-value { font-size:32px; font-weight:700; color:var(--primary); line-height:1.2; }
+.stat-label { font-size:12px; color:var(--text-secondary); margin-top:4px; }
+.search-box { display:flex; gap:8px; margin-bottom:12px; }
+.search-box input { flex:1; padding:12px 16px; border:2px solid var(--border); border-radius:var(--radius-sm); font-size:15px; outline:none; transition:border .2s; }
+.search-box input:focus { border-color:var(--primary); }
+.search-box button { padding:12px 24px; background:var(--primary); color:#fff; border:none; border-radius:var(--radius-sm); font-size:15px; font-weight:600; cursor:pointer; white-space:nowrap; }
+.search-box button:active { transform:scale(.98); }
+.quick-tags { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:16px; }
+.quick-tag { padding:5px 12px; background:var(--card-bg); border:1px solid var(--border); border-radius:16px; font-size:12px; color:var(--text-secondary); cursor:pointer; transition:all .15s; }
+.quick-tag:hover,.quick-tag:active { border-color:var(--primary); color:var(--primary); }
+.compare-summary { background:linear-gradient(135deg,#f6ffed,#d9f7be); border-radius:var(--radius); padding:20px; margin-bottom:16px; text-align:center; }
+.compare-summary .cheapest-label { font-size:13px; color:var(--text-secondary); }
+.compare-summary .cheapest-value { font-size:36px; font-weight:800; color:var(--success); margin:4px 0; }
+.compare-summary .cheapest-platform { font-size:15px; color:var(--primary); font-weight:600; }
+.activity-item { padding:14px; border:1px solid var(--border); border-radius:var(--radius-sm); margin-bottom:10px; background:var(--card-bg); }
+.activity-item.cheapest { border-color:var(--success); background:#f6ffed; }
+.activity-top { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:6px; }
+.activity-name { font-size:15px; font-weight:600; flex:1; }
+.activity-price-box { text-align:right; white-space:nowrap; }
+.price-now { font-size:22px; font-weight:700; color:var(--danger); }
+.price-old { font-size:12px; color:var(--text-secondary); text-decoration:line-through; margin-left:4px; }
+.activity-desc { font-size:13px; color:var(--text-secondary); margin-top:4px; }
+.activity-conds { font-size:11px; color:var(--text-secondary); margin-top:6px; background:var(--bg); padding:4px 8px; border-radius:4px; display:inline-block; }
+.activity-bottom { display:flex; justify-content:space-between; align-items:center; margin-top:10px; }
+.btn-deal { display:inline-flex; align-items:center; gap:4px; padding:8px 20px; border:none; border-radius:6px; font-size:14px; font-weight:700; cursor:pointer; text-decoration:none; transition:all .2s; color:#fff; background:var(--danger); }
+.btn-deal.cheapest-deal { background:var(--success); }
+.btn-deal:active { transform:scale(.96); }
+.deal-hint { font-size:11px; color:var(--text-secondary); margin-top:4px; }
+.bank-group { margin-bottom:20px; }
+.bank-label { font-size:14px; font-weight:700; color:var(--primary); margin-bottom:8px; padding-left:8px; border-left:3px solid var(--primary); }
+.card-pick { padding:12px 14px; border:1px solid var(--border); border-radius:var(--radius-sm); margin-bottom:6px; cursor:pointer; transition:all .15s; display:flex; justify-content:space-between; align-items:center; background:var(--card-bg); }
+.card-pick:hover,.card-pick:active { border-color:var(--primary); background:var(--primary-light); }
+.card-pick.selected { border-color:var(--primary); background:var(--primary-light); }
+.card-pick-name { font-size:14px; font-weight:500; }
+.card-pick-benefits { font-size:12px; color:var(--text-secondary); }
+.benefit-item { padding:12px; border:1px solid var(--border); border-radius:var(--radius-sm); margin-bottom:8px; background:var(--card-bg); }
+.benefit-item h4 { font-size:14px; font-weight:600; margin-bottom:4px; }
+.benefit-item p { font-size:13px; color:var(--text-secondary); }
+.benefit-tags { display:flex; gap:6px; margin-top:8px; flex-wrap:wrap; }
+/* card image with fallback gradient */
+.card-thumb { width:48px; height:32px; border-radius:4px; object-fit:cover; flex-shrink:0; }
+.card-thumb-fallback { width:48px; height:32px; border-radius:4px; flex-shrink:0; display:flex; align-items:center; justify-content:center; color:#fff; font-size:10px; font-weight:700; }
+.redemption-item { display:flex; justify-content:space-between; align-items:center; padding:10px; border:1px solid var(--border); border-radius:var(--radius-sm); margin-bottom:6px; background:var(--card-bg); }
+.redemption-info h4 { font-size:14px; font-weight:600; }
+.redemption-info p { font-size:12px; color:var(--text-secondary); }
+.redemption-right { text-align:right; }
+.redemption-points { font-size:16px; font-weight:700; color:var(--warning); }
+.redemption-value { font-size:12px; color:var(--text-secondary); }
+.empty { text-align:center; padding:32px 16px; color:var(--text-secondary); }
+.empty-icon { font-size:48px; margin-bottom:8px; }
+.loading { text-align:center; padding:20px; color:var(--text-secondary); }
+.section-label { font-size:12px; font-weight:600; color:var(--text-secondary); margin:20px 0 10px; text-transform:uppercase; letter-spacing:.5px; }
+.filter-row { display:flex; gap:6px; margin-bottom:12px; flex-wrap:wrap; }
+.filter-chip { padding:5px 14px; border:1px solid var(--border); border-radius:16px; font-size:12px; cursor:pointer; transition:all .15s; background:var(--card-bg); color:var(--text-secondary); display:flex; align-items:center; gap:4px; }
+.filter-chip:hover { border-color:var(--primary); color:var(--primary); }
+.filter-chip.active { background:var(--primary); color:#fff; border-color:var(--primary); }
+.filter-chip .badge { background:rgba(0,0,0,0.1); padding:1px 6px; border-radius:8px; font-size:11px; }
+.filter-chip.active .badge { background:rgba(255,255,255,0.25); }
+/* === 我的卡包 === */
+.wallet-card { background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:#fff; border-radius:var(--radius); padding:20px; margin-bottom:12px; position:relative; overflow:hidden; box-shadow:0 4px 16px rgba(102,126,234,0.3); }
+.wallet-card.inactive { background:linear-gradient(135deg,#aaa,#888); opacity:0.7; }
+.wallet-card-bank { font-size:12px; opacity:0.8; }
+.wallet-card-name { font-size:20px; font-weight:700; margin:4px 0 12px; }
+.wallet-card-last4 { font-size:18px; font-family:monospace; letter-spacing:3px; opacity:0.9; }
+.wallet-card-row { display:flex; justify-content:space-between; font-size:12px; opacity:0.85; margin-top:12px; }
+.wallet-card-actions { display:flex; gap:8px; margin-top:16px; }
+.wallet-btn { padding:6px 16px; border:1px solid rgba(255,255,255,0.4); border-radius:6px; font-size:12px; color:#fff; background:rgba(255,255,255,0.15); cursor:pointer; }
+.wallet-btn:hover,.wallet-btn:active { background:rgba(255,255,255,0.25); }
+.add-card-btn { width:100%; padding:16px; border:2px dashed var(--border); border-radius:var(--radius); background:transparent; font-size:15px; color:var(--text-secondary); cursor:pointer; transition:all .2s; margin-bottom:12px; }
+.add-card-btn:hover { border-color:var(--primary); color:var(--primary); background:var(--primary-light); }
+/* bill stats */
+.stat-card { background:var(--card-bg); border:1px solid var(--border); border-radius:8px; padding:12px; text-align:center; min-width:80px; flex:1; }
+.stat-num { font-size:22px; font-weight:700; }
+.stat-label { font-size:11px; color:var(--text-secondary); margin-top:2px; }
+/* modal */
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:200; display:flex; align-items:flex-end; justify-content:center; }
+.modal { background:#fff; border-radius:16px 16px 0 0; width:100%; max-width:800px; max-height:85vh; overflow-y:auto; padding:20px; animation:slideUp .25s ease; }
+@keyframes slideUp { from{transform:translateY(100%);} to{transform:translateY(0);} }
+.modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+.modal-title { font-size:18px; font-weight:700; }
+.modal-close { font-size:24px; cursor:pointer; color:var(--text-secondary); border:none; background:none; }
+.form-group { margin-bottom:14px; }
+.form-group label { display:block; font-size:13px; font-weight:500; margin-bottom:4px; color:var(--text); }
+.form-group input, .form-group select, .form-group textarea { width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:var(--radius-sm); font-size:15px; outline:none; }
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color:var(--primary); }
+.form-row { display:flex; gap:12px; }
+.form-row .form-group { flex:1; }
+.btn-primary { width:100%; padding:14px; background:var(--primary); color:#fff; border:none; border-radius:var(--radius-sm); font-size:16px; font-weight:600; cursor:pointer; margin-top:8px; }
+.btn-primary:active { transform:scale(.98); }
+.search-result-item { padding:12px; border:1px solid var(--border); border-radius:var(--radius-sm); margin-bottom:6px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; }
+.search-result-item:hover { border-color:var(--primary); background:var(--primary-light); }
+@media (max-width:500px) {
+  .header-stats { font-size:10px; gap:8px; }
+  .header-stats span { font-size:10px; }
+  .stats-grid { grid-template-columns:repeat(2,1fr); }
+  .price-now { font-size:18px; }
+  .tab { font-size:11px; padding:6px 8px; }
+  .header-brand { font-size:15px; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-brand"><span class="logo">💳</span> ccreward.cn</div>
+  <div class="header-stats">
+    <span id="hdr-user" style="cursor:pointer;" onclick="openLoginModal()">👤 登录注册</span>
+    <span id="hdr-cards">📊 --</span>
+    <span id="hdr-banks">🏦 --</span>
+    <span id="hdr-activities">🎫 --</span>
+  </div>
+</div>
+
+<div class="tabs" id="tabs-bar">
+  <div class="tab active" data-tab="wallet">👛 卡包</div>
+  <div class="tab" data-tab="recommend">🎯 推荐</div>
+  <div class="tab" data-tab="deals">🔍 比价</div>
+  <div class="tab" data-tab="offers">🏦 银行优惠</div>
+  <div class="tab" data-tab="cards">💳 权益</div>
+  <div class="tab" data-tab="compare">📊 对比</div>
+  <div class="tab" data-tab="bills">💰 账单</div>
+  <div class="tab" data-tab="reminders">📅 提醒</div>
+  <div class="tab" data-tab="all">📋 活动</div>
+</div>
+
+<div class="container" id="main-panel"></div>
+
+<script>
+/* ========== Detector ========== */
+const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 0 && window.innerWidth < 1024);
+
+/* ========== State ========== */
+const S = {
+  tab:'wallet',
+  overview:null,
+  cards:[],
+  cardsById:{},
+  selectedCardId:null,
+  categories:[],
+  activities:[],
+  activityFilter:{category:null},
+  searchResult:null,
+  wallet:[],
+  token: localStorage.getItem('ccreward_token') || '',
+  userId: localStorage.getItem('ccreward_uid') || '',
+  loggedIn: localStorage.getItem('ccreward_loggedIn') === 'true',
+  username: localStorage.getItem('ccreward_username') || '',
+};
+const API = '/api';
+const ICONS = {抖音:'🎵',美团:'🛵',支付宝:'💙',京东:'🛒',淘宝:'🛍️',饿了么:'🍜',滴滴:'🚗',微信:'💬',其他:'📌'};
+const QUICK = ['瑞幸咖啡','星巴克','麦当劳','肯德基','喜茶','海底捞','奈雪的茶','蜜雪冰城','必胜客','汉堡王','库迪咖啡','霸王茶姬','茶百道','塔斯汀','盒马鲜生'];
+
+async function get(p) { const r=await fetch(API+p, {headers:S.token?{'Authorization':'Bearer '+S.token}:{}}); if(!r.ok) throw Error(`${p} ${r.status}`); return r.json(); }
+async function post(p, body) { const r=await fetch(API+p, {method:'POST',headers:{'Content-Type':'application/json',...(S.token?{'Authorization':'Bearer '+S.token}:{})},body:JSON.stringify(body||{})}); if(!r.ok) throw Error(`${p} ${r.status}`); return r.json(); }
+async function patch(p, body) { const r=await fetch(API+p, {method:'PATCH',headers:{'Content-Type':'application/json',...(S.token?{'Authorization':'Bearer '+S.token}:{})},body:JSON.stringify(body||{})}); if(!r.ok) throw Error(`${p} ${r.status}`); return r.json(); }
+async function del(p) { const r=await fetch(API+p, {method:'DELETE',headers:S.token?{'Authorization':'Bearer '+S.token}:{}}); if(!r.ok) throw Error(`${p} ${r.status}`); return r.json(); }
+
+function esc(s) { return s?String(s).replace(/</g,'&lt;').replace(/>/g,'&gt;'):''; }
+
+/* card image with CSS gradient fallback */
+var BANK_COLORS = { '招商银行':['#d4380d','#ff7875'], '工商银行':['#cf1322','#f5222d'], '建设银行':['#003eb3','#1677ff'], '中信银行':['#c41d7f','#eb2f96'], '平安银行':['#fa8c16','#ffa940'], '广发银行':['#237804','#52c41a'], '浦发银行':['#003eb3','#4096ff'], '兴业银行':['#006d75','#13c2c2'], '民生银行':['#531dab','#9254de'], '光大银行':['#ad4e00','#d46b08'], '华夏银行':['#a8071a','#f5222d'], '邮储银行':['#00704a','#52c41a'], '交通银行':['#1d39c4','#597ef7'], '农业银行':['#08979c','#13c2c2'], '中国银行':['#a8071a','#cf1322'], '北京银行':['#003eb3','#2f54eb'], '上海银行':['#d48806','#fadb14'], '广州银行':['#1d39c4','#4096ff'], '杭州银行':['#237804','#52c41a'], '南京银行':['#ad4e00','#d46b08'], '成都银行':['#a8071a','#f5222d'], '深圳农商银行':['#1d39c4','#2f54eb'], '苏州银行':['#531dab','#9254de'], '江苏银行':['#0050b3','#4096ff'], '宁波银行':['#006d75','#08979c'], '重庆银行':['#ad2102','#d4380d'] };
+function bankGradient(bank) { var c = BANK_COLORS[bank] || ['#434343','#8c8c8c']; return 'linear-gradient(135deg,' + c[0] + ',' + c[1] + ')'; }
+function cardThumb(c) { var bg = bankGradient(c.bank); return '<div class="card-thumb-fallback" style="background:' + bg + '">' + esc(c.bank).slice(0,2) + '</div>'; }
+function t(text,type) { return `<span class="tag tag-${type}">${esc(text)}</span>`; }
+
+async function ensureAuth() {
+  // 已登录或已有 token，直接返回
+  if (S.token || S.loggedIn) return;
+  // 不再自动注册匿名用户——未登录用户只看公开数据
+}
+
+/* ========== Platform search launcher ========== */
+var PLATFORM_LINKS = {
+  '抖音': { web:function(kw){return 'https://www.douyin.com/search/'+encodeURIComponent(kw+' 团购');}, app:function(kw){return 'douyin://search/'+encodeURIComponent(kw+' 团购');} },
+  '美团': { web:function(kw){return 'https://i.meituan.com/s/'+encodeURIComponent(kw)+'/';}, app:function(kw){return 'imeituan://www.meituan.com/deal/search?keyword='+encodeURIComponent(kw);} },
+  '饿了么': { web:function(kw){return 'https://h5.ele.me/search?keyword='+encodeURIComponent(kw);}, app:function(kw){return 'eleme://search?keyword='+encodeURIComponent(kw);} },
+  '支付宝': { web:function(kw){return 'https://render.alipay.com/p/s/search?keyword='+encodeURIComponent(kw);}, app:function(kw){return 'alipays://platformapi/startapp?appId=20001&page=pages/home/index&query='+encodeURIComponent('keyword='+kw);} },
+  '京东': { web:function(kw){return 'https://so.m.jd.com/ware/search.action?keyword='+encodeURIComponent(kw);}, app:function(kw){return 'openApp.jdMobile://virtual?params={"category":"jump","des":"search","keyword":"'+kw+'"}';} },
+  '淘宝': { web:function(kw){return 'https://m.taobao.com/search?q='+encodeURIComponent(kw);}, app:function(kw){return 'taobao://m.taobao.com/search?q='+encodeURIComponent(kw);} },
+  '滴滴': { web:function(kw){return 'https://common.diditaxi.com.cn/';}, app:function(kw){return 'diditaxi://';} },
+};
+
+function openDeal(platform, keyword) {
+  var cfg = PLATFORM_LINKS[platform]; if (!cfg) return;
+  var webUrl = cfg.web(keyword), appUrl = cfg.app(keyword);
+  if (isMobile && appUrl) {
+    var ifr = document.createElement('iframe'); ifr.style.display='none'; ifr.src=appUrl; document.body.appendChild(ifr);
+    var timer = setTimeout(function(){ document.body.removeChild(ifr); location.href=webUrl; }, 2500);
+    var c = function(){ clearTimeout(timer); };
+    document.addEventListener('visibilitychange', c, {once:true});
+    window.addEventListener('pagehide', c, {once:true});
+  } else {
+    var a = document.createElement('a'); a.href=webUrl; a.target='_blank'; a.rel='noopener noreferrer';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  }
+}
+
+/* ========== Init ========== */
+(async function init() {
+  updateHeaderUser();
+  try {
+    const [ov,cats,cds] = await Promise.all([
+      get('/cards/stats/overview'), get('/activities/categories'), get('/cards?page_size=100'),
+    ]);
+    S.overview = ov; S.categories = cats;
+    S.cards = cds.items || cds;
+    S.cards.forEach(c=>{ c.benefits=c.benefits||[]; S.cardsById[c.id]=c; });
+    document.getElementById('hdr-cards').innerHTML = `📊 ${ov.cards}卡`;
+    document.getElementById('hdr-banks').innerHTML = `🏦 ${ov.banks}行`;
+    document.getElementById('hdr-activities').innerHTML = `🎫 ${ov.activities||'?'}活动`;
+  } catch(e) { console.error(e); }
+
+  document.querySelectorAll('.tab').forEach(el=>el.addEventListener('click',()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    el.classList.add('active');
+    S.tab = el.dataset.tab;
+    render();
+  }));
+  render();
+})();
+
+function render() {
+  const p = document.getElementById('main-panel');
+  if (S.tab==='wallet') renderWallet(p);
+  else if (S.tab==='recommend') renderRecommend(p);
+  else if (S.tab==='deals') renderDeals(p);
+  else if (S.tab==='offers') renderBankOffers(p);
+  else if (S.tab==='cards') renderCards(p);
+  else if (S.tab==='compare') renderCompare(p);
+  else if (S.tab==='bills') renderBills(p);
+  else if (S.tab==='reminders') renderReminders(p);
+  else if (S.tab==='all') renderAllActivities(p);
+}
+
+/* ======== TAB 0: 我的卡包 ======== */
+async function renderWallet(panel) {
+  if (!S.loggedIn) {
+    panel.innerHTML = `<div class="empty"><div class="empty-icon">👤</div>请先登录查看卡包<br><small>点击右上角「登录注册」绑定信用卡权益</small><br><br><button class="btn-primary" onclick="openLoginModal()">🔑 登录 / 注册</button></div>`;
+    return;
+  }
+  panel.innerHTML = '<div class="loading">⏳ 加载卡包...</div>';
+  try {
+    S.wallet = await get('/user/cards');
+  } catch(e) {
+    panel.innerHTML = `<div class="empty">加载失败: ${esc(e.message)}</div>`;
+    return;
+  }
+
+  let html = '';
+
+  if (S.wallet.length === 0) {
+    html = `<div class="empty"><div class="empty-icon">👛</div>卡包是空的<br><small>添加你的信用卡，统一管理权益</small></div>`;
+  } else {
+    // 汇总
+    const totalLimit = S.wallet.filter(c=>c.is_active).reduce((s,c)=>s+(c.credit_limit||0),0);
+    const activeCount = S.wallet.filter(c=>c.is_active).length;
+    html += `<div class="stats-grid">
+      <div class="stat-card"><div class="stat-value">${activeCount}</div><div class="stat-label">持有卡片</div></div>
+      <div class="stat-card"><div class="stat-value">¥${(totalLimit/10000).toFixed(1)}万</div><div class="stat-label">总额度</div></div>
+    </div>`;
+  }
+
+  // 卡片列表
+  S.wallet.forEach((c, i) => {
+    const bank = c.card ? c.card.bank : '自定义';
+    const name = c.card ? c.card.name : (c.nickname || '未命名');
+    const benefits = c.card ? (c.card.benefits || []) : [];
+    const last4 = c.last_four ? `**** ${esc(c.last_four)}` : '****';
+    const expire = c.expire_date ? esc(c.expire_date) : '';
+    const limitStr = c.credit_limit ? `额度 ¥${(c.credit_limit/10000).toFixed(1)}万` : '';
+    const issueStr = c.issue_date ? `办卡 ${esc(c.issue_date)}` : '';
+    const feeStr = c.annual_fee_condition ? esc(c.annual_fee_condition) : '';
+    const feeWaived = c.annual_fee_waived === true ? '<span style="color:#52c41a">✓ 已减免</span>' : (c.annual_fee_waived === false ? '<span style="color:#ff4d4f">✗ 未减免</span>' : '');
+
+    html += `<div class="wallet-card ${c.is_active===false?'inactive':''}">
+      <div class="wallet-card-bank">${esc(bank)}</div>
+      <div class="wallet-card-name">${esc(c.nickname || name)}</div>
+      <div class="wallet-card-last4">${last4}</div>
+      <div class="wallet-card-row">
+        <span>${limitStr}</span>
+        <span>${issueStr}${expire?' · 到期 '+expire:''}</span>
+      </div>
+      ${feeStr||feeWaived ? `<div class="wallet-card-row"><span>${feeStr}</span>${feeWaived}</div>` : ''}
+      ${c.notes ? `<div class="wallet-card-row"><span>📝 ${esc(c.notes)}</span></div>` : ''}
+      <div class="wallet-card-actions">
+        <button class="wallet-btn" onclick="openEditCard('${c.id}')">✏️ 编辑</button>
+        <button class="wallet-btn" onclick="toggleCardActive('${c.id}', ${!c.is_active})">${c.is_active===false?'恢复':'停用'}</button>
+        <button class="wallet-btn" onclick="deleteCard('${c.id}')">🗑️ 删除</button>
+      </div>
+    </div>`;
+  });
+
+  html += `<button class="add-card-btn" onclick="openAddCard()">➕ 添加信用卡</button>`;
+
+  panel.innerHTML = html;
+}
+
+function openAddCard() {
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.innerHTML = `<div class="modal" id="add-modal">
+    <div class="modal-header"><div class="modal-title">添加信用卡</div><button class="modal-close" onclick="this.closest('.modal-overlay').remove()">×</button></div>
+    <div id="add-content">
+      <div class="search-box">
+        <input id="card-search-input" placeholder="搜索卡名/银行，如：招行 白金" oninput="searchCardsForAdd()" />
+      </div>
+      <div id="card-search-results" style="min-height:60px;"></div>
+      <div class="section-label">或手动录入自定义卡</div>
+      <button class="add-card-btn" onclick="showManualEntry()">📝 手动录入（不在库中的卡）</button>
+    </div>
+  </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e=>{ if(e.target===modal) modal.remove(); });
+  document.getElementById('card-search-input')?.focus();
+}
+
+let searchTimer = null;
+function searchCardsForAdd() {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(async () => {
+    const kw = document.getElementById('card-search-input').value.trim();
+    const el = document.getElementById('card-search-results');
+    if (!kw) { el.innerHTML = ''; return; }
+    el.innerHTML = '<div class="loading">搜索中...</div>';
+    try {
+      const results = await get(`/user/cards/search?keyword=${encodeURIComponent(kw)}`);
+      el.innerHTML = results.length ? results.map(c=>`<div class="search-result-item" onclick='selectCardForAdd(${JSON.stringify(c)})'>
+        <div><div style="font-weight:500">${esc(c.bank)} ${esc(c.name)}</div><div style="font-size:12px;color:var(--text-secondary)">${esc(c.network)} · ${esc(c.level)} · ${esc(c.annual_fee)}</div></div>
+        <div style="color:var(--primary)">添加 ›</div></div>`).join('') : '<div class="empty">未找到，试试手动录入</div>';
+    } catch(e) { el.innerHTML = `<div class="empty">搜索失败</div>`; }
+  }, 300);
+}
+
+function selectCardForAdd(card) {
+  document.getElementById('add-content').innerHTML = `
+    <div class="card" style="background:var(--primary-light);border:1px solid var(--primary);">
+      <div style="font-weight:600;">${esc(card.bank)} ${esc(card.name)}</div>
+      <div style="font-size:13px;color:var(--text-secondary)">${esc(card.network)} · ${esc(card.level)} · 年费: ${esc(card.annual_fee)}</div>
+    </div>
+    <div class="form-group"><label>昵称（可选）</label><input id="add-nickname" placeholder="如：招行主卡" /></div>
+    <div class="form-row">
+      <div class="form-group"><label>卡号后四位</label><input id="add-last4" maxlength="4" placeholder="1234" /></div>
+      <div class="form-group"><label>额度（元）</label><input id="add-limit" type="number" placeholder="80000" /></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>办卡日期</label><input id="add-issue" placeholder="2024-03" /></div>
+      <div class="form-group"><label>到期月</label><input id="add-expire" placeholder="2029-08" /></div>
+    </div>
+    <div class="form-group"><label>年费减免条件</label><input id="add-fee-cond" placeholder="如：年刷6次免年费" /></div>
+    <div class="form-group"><label>备注</label><textarea id="add-notes" rows="2" placeholder="如：主刷卡 / 9分生活"></textarea></div>
+    <button class="btn-primary" onclick='confirmAddCard("${card.id}")'>添加到卡包</button>
+  `;
+}
+
+function showManualEntry() {
+  document.getElementById('add-content').innerHTML = `
+    <div class="card" style="background:var(--primary-light);border:1px solid var(--primary);">
+      <div style="font-weight:600;">📝 自定义卡片</div>
+      <div style="font-size:13px;color:var(--text-secondary)">不在种子库中的卡，手动录入</div>
+    </div>
+    <div class="form-group"><label>卡片名称 *</label><input id="add-nickname" placeholder="如：工行畅通卡" /></div>
+    <div class="form-row">
+      <div class="form-group"><label>卡号后四位</label><input id="add-last4" maxlength="4" placeholder="1234" /></div>
+      <div class="form-group"><label>额度（元）</label><input id="add-limit" type="number" placeholder="80000" /></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>办卡日期</label><input id="add-issue" placeholder="2024-03" /></div>
+      <div class="form-group"><label>到期月</label><input id="add-expire" placeholder="2029-08" /></div>
+    </div>
+    <div class="form-group"><label>年费减免条件</label><input id="add-fee-cond" placeholder="如：年刷6次免年费" /></div>
+    <div class="form-group"><label>备注</label><textarea id="add-notes" rows="2" placeholder="备注"></textarea></div>
+    <button class="btn-primary" onclick='confirmAddCard("")'>添加到卡包</button>
+  `;
+}
+
+async function confirmAddCard(cardId) {
+  const body = {
+    card_id: cardId || '',
+    nickname: val('add-nickname'),
+    last_four: val('add-last4'),
+    credit_limit: parseFloat(val('add-limit')) || null,
+    issue_date: val('add-issue'),
+    expire_date: val('add-expire'),
+    annual_fee_condition: val('add-fee-cond'),
+    notes: val('add-notes'),
+  };
+  try {
+    await post('/user/cards', body);
+    document.querySelector('.modal-overlay')?.remove();
+    await renderWallet(document.getElementById('main-panel'));
+  } catch(e) {
+    alert('添加失败: ' + e.message);
+  }
+}
+
+function val(id) { const el = document.getElementById(id); return el ? el.value.trim() : ''; }
+
+function openEditCard(userCardId) {
+  const c = S.wallet.find(x=>x.id===userCardId);
+  if (!c) return;
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.innerHTML = `<div class="modal">
+    <div class="modal-header"><div class="modal-title">编辑卡片信息</div><button class="modal-close" onclick="this.closest('.modal-overlay').remove()">×</button></div>
+    <div class="card" style="background:var(--primary-light);margin-bottom:16px;">
+      <div style="font-weight:600;">${esc(c.card?c.card.bank:'自定义')} ${esc(c.card?c.card.name:c.nickname||'')}</div>
+    </div>
+    <div class="form-group"><label>昵称</label><input id="edit-nickname" value="${esc(c.nickname||'')}" /></div>
+    <div class="form-row">
+      <div class="form-group"><label>卡号后四位</label><input id="edit-last4" maxlength="4" value="${esc(c.last_four||'')}" /></div>
+      <div class="form-group"><label>额度（元）</label><input id="edit-limit" type="number" value="${c.credit_limit||''}" /></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>办卡日期</label><input id="edit-issue" value="${esc(c.issue_date||'')}" placeholder="YYYY-MM" /></div>
+      <div class="form-group"><label>到期月</label><input id="edit-expire" value="${esc(c.expire_date||'')}" placeholder="YYYY-MM" /></div>
+    </div>
+    <div class="form-group"><label>年费减免条件</label><input id="edit-fee-cond" value="${esc(c.annual_fee_condition||'')}" /></div>
+    <div class="form-group"><label>年费是否已减免</label>
+      <select id="edit-fee-waived"><option value="">未知</option><option value="true" ${c.annual_fee_waived===true?'selected':''}>已减免</option><option value="false" ${c.annual_fee_waived===false?'selected':''}>未减免</option></select>
+    </div>
+    <div class="form-group"><label>备注</label><textarea id="edit-notes" rows="2">${esc(c.notes||'')}</textarea></div>
+    <button class="btn-primary" onclick="confirmEditCard('${c.id}')">保存</button>
+  </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e=>{ if(e.target===modal) modal.remove(); });
+}
+
+async function confirmEditCard(userCardId) {
+  const waivered = val('edit-fee-waived');
+  const body = {
+    nickname: val('edit-nickname') || null,
+    last_four: val('edit-last4') || null,
+    credit_limit: parseFloat(val('edit-limit')) || null,
+    issue_date: val('edit-issue') || null,
+    expire_date: val('edit-expire') || null,
+    annual_fee_condition: val('edit-fee-cond') || null,
+    annual_fee_waived: waivered === '' ? null : waivered === 'true',
+    notes: val('edit-notes') || null,
+  };
+  try {
+    await patch(`/user/cards/${userCardId}`, body);
+    document.querySelector('.modal-overlay')?.remove();
+    await renderWallet(document.getElementById('main-panel'));
+  } catch(e) { alert('保存失败: ' + e.message); }
+}
+
+async function toggleCardActive(userCardId, active) {
+  try {
+    await patch(`/user/cards/${userCardId}`, {is_active: active});
+    await renderWallet(document.getElementById('main-panel'));
+  } catch(e) { alert('操作失败: ' + e.message); }
+}
+
+async function deleteCard(userCardId) {
+  if (!confirm('确定删除这张卡？')) return;
+  try {
+    await del(`/user/cards/${userCardId}`);
+    await renderWallet(document.getElementById('main-panel'));
+  } catch(e) { alert('删除失败: ' + e.message); }
+}
+
+/* ======== TAB 1: Deals ======== */
+function renderDeals(panel) {
+  panel.innerHTML = `
+    <div class="search-box">
+      <input id="searchInput" placeholder="搜商品比价：瑞幸咖啡 / 星巴克 / 海底捞..." onkeydown="if(event.key==='Enter')doSearch()">
+      <button onclick="doSearch()">比价</button>
+    </div>
+    <div class="quick-tags">${QUICK.map(k=>`<span class="quick-tag" onclick="document.getElementById('searchInput').value='${k}';doSearch()">${k}</span>`).join('')}</div>
+    <div id="deals-result"><div class="empty"><div class="empty-icon">🔍</div>输入关键词搜索，看各平台价格参考<br><small>点「去XX搜」跳转平台App/网页，在平台内查看真实优惠下单</small></div></div>`;
+  document.getElementById('searchInput')?.focus();
+}
+
+async function doSearch() {
+  const kw = document.getElementById('searchInput').value.trim();
+  const el = document.getElementById('deals-result');
+  if(!kw){ el.innerHTML='<div class="empty">请输入搜索关键词</div>'; return; }
+  el.innerHTML='<div class="loading">⏳ 搜索中...</div>';
+  try {
+    S.searchResult = await get(`/activities/compare?keyword=${encodeURIComponent(kw)}`);
+    renderDealsResult();
+  } catch(e) { el.innerHTML=`<div class="empty">搜索失败: ${esc(e.message)}</div>`; }
+}
+
+function renderDealsResult() {
+  const r = S.searchResult, el = document.getElementById('deals-result');
+  if(!r.items.length){ el.innerHTML=`<div class="empty"><div class="empty-icon">😕</div>未找到"${esc(r.keyword)}"</div>`; return; }
+  const cheapest = r.items.find(i=>i.is_cheapest);
+  const summary = r.cheapest_price!=null ? `
+    <div class="compare-summary">
+      <div class="cheapest-label">"${esc(r.keyword)}" 比价结果</div>
+      <div class="cheapest-value">¥${r.cheapest_price}</div>
+      <div class="cheapest-platform">🏆 最低价平台：${esc(r.cheapest_platform)}</div>
+      ${cheapest ? `<button style="margin-top:12px;padding:10px 32px;background:var(--success);color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;" onclick="openDeal('${esc(cheapest.platform_label)}','${esc(r.keyword)}')">去 ${esc(r.cheapest_platform)} 搜索 ¥${r.cheapest_price} →</button>` : ''}
+    </div>` : '';
+  const items = r.items.map(i=>{
+    const hasP = i.activity_price!=null&&i.activity_price>0;
+    const priceHtml = hasP ? `<span class="price-now">¥${i.activity_price}</span>${i.original_price>i.activity_price?`<span class="price-old">¥${i.original_price}</span>`:''}` : '<span class="price-now" style="font-size:14px;">见详情</span>';
+    const plt = esc(i.platform_label);
+    return `<div class="activity-item ${i.is_cheapest?'cheapest':''}">
+      <div class="activity-top"><div class="activity-name">${esc(i.title)} ${t(plt,'blue')} ${i.is_cheapest?t('最低价','green'):''}</div><div class="activity-price-box">${priceHtml}</div></div>
+      <div class="activity-desc">${esc(i.discount_description)}</div>
+      ${i.usage_conditions?`<div class="activity-conds">📋 ${esc(i.usage_conditions)}</div>`:''}
+      <div class="activity-bottom"><span style="font-size:12px;color:var(--text-secondary);">${ICONS[plt]||'📌'} ${plt}平台</span><button class="btn-deal ${i.is_cheapest?'cheapest-deal':''}" onclick="openDeal('${plt}','${esc(r.keyword)}')">去${plt}搜 →</button></div>
+      <div class="deal-hint">${isMobile ? '📱 唤起'+plt+'App → 搜索优惠' : '🖥️ 打开'+plt+'搜索页'}</div></div>`;
+  }).join('');
+  el.innerHTML = summary + `<div class="section-label">共 ${r.items.length} 条优惠 · 覆盖 ${r.total_platforms} 平台</div>` + items;
+}
+
+/* ======== TAB 2: Cards ======== */
+function renderCards(panel) {
+  if(!S.cards.length){ panel.innerHTML='<div class="loading">加载卡片...</div>'; return; }
+  if(!S.selectedCardId) S.selectedCardId = S.cards[0].id;
+  const vc = S.cardsById[S.selectedCardId];
+  const banks={}; S.cards.forEach(c=>{ (banks[c.bank]=banks[c.bank]||[]).push(c); });
+  const bp = Object.keys(banks).sort().map(b=>`
+    <div class="bank-group"><div class="bank-label">${esc(b)}（${banks[b].length}张）</div>
+    ${banks[b].map(c=>`<div class="card-pick ${c.id===S.selectedCardId?'selected':''}" onclick="S.selectedCardId='${c.id}';render()" style="display:flex;align-items:center;gap:10px;">
+      ${cardThumb(c)}
+      <div style="flex:1;"><div class="card-pick-name">${esc(c.name)}</div><div class="card-pick-benefits">${c.network} · ${c.level} · ${c.benefits?.length||0}项权益</div></div>
+      <div style="color:var(--primary);font-size:16px;">›</div></div>`).join('')}</div>`).join('');
+  const bh = vc.benefits?.length ? vc.benefits.map(b=>`<div class="benefit-item"><h4>${esc(b.title)} ${t(b.benefit_type,'blue')} ${t(b.category,'green')}</h4><p>${esc(b.description)}</p><div class="benefit-tags">${b.value_text?t(b.value_text,'orange'):''}${b.discount_percent?t(`${b.discount_percent}折`,'red'):''}${b.points_per_yuan?t(`${b.points_per_yuan}积分/元`,'blue'):''}${b.cashback_percent?t(`返${b.cashback_percent}%`,'red'):''}${b.usage_limit?t(b.usage_limit,'orange'):''}</div></div>`).join('') : '<div class="empty">暂无权益数据</div>';
+  panel.innerHTML = `
+    <div class="card"><div class="card-header"><div class="card-title">${esc(vc.bank)} ${esc(vc.name)}</div><div>${t(vc.network,'blue')} ${t(vc.level,'green')}</div></div><div class="card-meta">年费：${esc(vc.annual_fee)}${vc.description?' · '+esc(vc.description):''}</div></div>
+    <div class="section-label">📋 选择卡片（点击切换）</div>${bp}
+    <div class="section-label">🎁 ${vc.bank} ${vc.name} 权益（${vc.benefits?.length||0}项）</div>${bh}
+    <div class="section-label">🎯 积分兑换</div><div id="redemptions-area"><div class="loading">加载中...</div></div>`;
+  get(`/cards/${vc.id}/redemptions`).then(items=>{
+    document.getElementById('redemptions-area').innerHTML = items.length ? items.map(r=>`<div class="redemption-item"><div class="redemption-info"><h4>${esc(r.item_name)}</h4><p>${esc(r.merchant_name)} · ${esc(r.category)}</p></div><div class="redemption-right"><div class="redemption-points">${r.points_required}积分</div>${r.cash_value?`<div class="redemption-value">≈¥${r.cash_value}</div>`:''}</div></div>`).join('') : '<div class="empty">暂无兑换商品</div>';
+  }).catch(()=>{ document.getElementById('redemptions-area').innerHTML='<div class="empty">加载失败</div>'; });
+}
+
+/* ======== TAB: 银行优惠 ======== */
+function renderBankOffers(panel) {
+  panel.innerHTML = '<div class="loading">⏳ 加载银行优惠...</div>';
+  get('/bank-offers').then(data => {
+    const offers = data.items || data || [];
+    if (!offers.length) { panel.innerHTML = '<div class="empty"><div class="empty-icon">🏦</div>暂无银行优惠数据</div>'; return; }
+    const grouped = {};
+    offers.forEach(o => { (grouped[o.bank_name||o.bank] = grouped[o.bank_name||o.bank] || []).push(o); });
+    let html = '';
+    Object.keys(grouped).sort().forEach(bank => {
+      const items = grouped[bank];
+      html += `<div class="bank-group"><div class="bank-label">${esc(bank)}（${items.length}条）</div>`;
+      items.forEach(o => {
+        const expired = o.valid_to && new Date(o.valid_to) < new Date();
+        const statusTag = !o.is_active ? t('已停用','red') : expired ? t('已过期','red') : t('有效','green');
+        const validText = o.valid_to ? `截至 ${o.valid_to}` : (o.valid_period || '长期有效');
+        html += `<div class="activity-item${expired?'':''}" style="opacity:${expired||!o.is_active?'0.55':'1'}">
+          <div class="activity-top"><div class="activity-name">${esc(o.title)}</div><div>${statusTag}</div></div>
+          <div class="activity-desc">${esc(o.description||o.offer_detail||'')}</div>
+          <div class="activity-conds">${esc(o.bank_name||o.bank)} · ${esc(o.category||'通用')} · ${esc(validText)}</div>
+          ${o.discount_description ? `<div class="activity-conds" style="margin-left:6px;">${esc(o.discount_description)}</div>` : ''}
+          ${o.terms_conditions ? `<div style="font-size:11px;color:var(--text-secondary);margin-top:6px;">📋 ${esc(o.terms_conditions)}</div>` : ''}
+        </div>`;
+      });
+      html += '</div>';
+    });
+    panel.innerHTML = html;
+  }).catch(e => { panel.innerHTML = `<div class="empty">加载失败: ${esc(e.message)}</div>`; });
+}
+
+/* ======== TAB 3: All Activities ======== */
+function renderAllActivities(panel) {
+  panel.innerHTML = `<div id="cat-filters" class="filter-row"><div class="loading">加载分类...</div></div><div class="section-label" id="act-count">加载中...</div><div id="act-list"><div class="loading">加载活动...</div></div>`;
+  loadActivities();
+}
+
+async function loadActivities() {
+  try {
+    const r = await get('/activities?page_size=100&sort=price');
+    S.activities = r.items || [];
+    renderActivityFilters();
+    renderActivityList();
+  } catch(e) { document.getElementById('act-list').innerHTML=`<div class="empty">加载失败: ${esc(e.message)}</div>`; }
+}
+
+function renderActivityFilters() {
+  if(!S.categories.length) return;
+  const el = document.getElementById('cat-filters');
+  el.innerHTML = `<span class="filter-chip ${!S.activityFilter.category?'active':''}" onclick="S.activityFilter.category=null;renderActivityList();renderActivityFilters()">全部<span class="badge">${S.activities.length}</span></span>${S.categories.map(c=>`<span class="filter-chip ${S.activityFilter.category===c.category?'active':''}" onclick="S.activityFilter.category='${c.category}';renderActivityList();renderActivityFilters()">${esc(c.category)}<span class="badge">${c.count}</span></span>`).join('')}`;
+}
+
+function renderActivityList() {
+  const filtered = S.activityFilter.category ? S.activities.filter(a=>a.category===S.activityFilter.category) : S.activities;
+  document.getElementById('act-count').textContent = `📋 共 ${filtered.length} 条活动`;
+  const el = document.getElementById('act-list');
+  if(!filtered.length){ el.innerHTML='<div class="empty">该分类暂无活动</div>'; return; }
+  el.innerHTML = filtered.map(a=>{
+    const hasP = a.activity_price!=null&&a.activity_price>0;
+    const priceHtml = hasP ? `<span class="price-now">¥${a.activity_price}</span>${a.original_price>a.activity_price?`<span class="price-old">¥${a.original_price}</span>`:''}` : '<span class="price-now" style="font-size:14px;">见详情</span>';
+    const plt = esc(a.platform);
+    const kw = esc(a.merchant_name || a.product_name || '');
+    return `<div class="activity-item"><div class="activity-top"><div class="activity-name">${esc(a.title)} ${t(plt,'blue')} ${t(a.category,'green')}</div><div class="activity-price-box">${priceHtml}</div></div><div class="activity-desc">${esc(a.discount_description)}</div>${a.usage_conditions?`<div class="activity-conds">📋 ${esc(a.usage_conditions)}</div>`:''}<div class="activity-bottom"><span style="font-size:12px;color:var(--text-secondary);">${esc(a.merchant_name)} · ${ICONS[plt]||''} ${plt}</span><button class="btn-deal" onclick="openDeal('${plt}','${kw}')">去${plt}搜 →</button></div><div class="deal-hint">${isMobile?'📱 唤起'+plt+'App':'🖥️ 打开'+plt+'搜索页'}</div></div>`;
+  }).join('');
+}
+
+/* ======== TAB: 场景推荐 ======== */
+function renderRecommend(panel) {
+  panel.innerHTML = `
+    <div class="card"><div class="card-title">🎯 场景推荐</div><div class="card-meta">输入消费场景，推荐最合适的信用卡</div></div>
+    <div class="search-box">
+      <input id="recommendInput" placeholder="如：星巴克 / 加油 / 外卖 / 看电影..." onkeydown="if(event.key==='Enter')doRecommend()">
+      <button onclick="doRecommend()">推荐</button>
+    </div>
+    <div class="quick-tags">${['星巴克','瑞幸咖啡','加油','外卖','看电影','火锅','京东购物','高铁出行'].map(k=>`<span class="quick-tag" onclick="document.getElementById('recommendInput').value='${k}';doRecommend()">${k}</span>`).join('')}</div>
+    <div id="recommend-result"><div class="empty"><div class="empty-icon">💡</div>输入消费场景，看看哪张卡最划算</div></div>`;
+}
+
+async function doRecommend() {
+  const kw = document.getElementById('recommendInput').value.trim();
+  const el = document.getElementById('recommend-result');
+  if(!kw){ el.innerHTML='<div class="empty">请输入场景关键词</div>'; return; }
+  el.innerHTML='<div class="loading">⏳ 分析中...</div>';
+  try {
+    const r = await get(`/recommend/scenario?scenario=${encodeURIComponent(kw)}`);
+    if(!r.recommendations||!r.recommendations.length){ el.innerHTML='<div class="empty">暂无匹配推荐</div>'; return; }
+    el.innerHTML = `<div class="section-label">"${esc(kw)}" 推荐 ${r.recommendations.length} 张卡</div>` +
+      r.recommendations.map((c,i)=>`
+        <div class="card" style="${i===0?'border:2px solid var(--primary);background:var(--primary-light);':''}">
+          <div class="card-header">
+            <div class="card-title">${i===0?'🏆 ':''}${c.card?.bank||''} ${c.card?.name||''} ${t('得分'+c.score,'blue')}</div>
+          </div>
+          <div class="card-meta">${c.reason||''}</div>
+          ${(c.matched_benefits||[]).length?`<div style="margin-top:8px;">${c.matched_benefits.map(b=>`<div class="benefit-item"><h4>${esc(b.title)} ${t(b.benefit_type,'blue')} ${t(b.category,'green')}</h4><p>${esc(b.description)}</p></div>`).join('')}</div>`:''}
+        </div>`).join('');
+  } catch(e) { el.innerHTML=`<div class="empty">推荐失败: ${esc(e.message)}</div>`; }
+}
+
+/* ======== TAB: 多卡对比 ======== */
+function renderCompare(panel) {
+  if(!S.cards.length){ panel.innerHTML='<div class="loading">加载卡片...</div>'; return; }
+  const banks={}; S.cards.forEach(c=>{ (banks[c.bank]=banks[c.bank]||[]).push(c); });
+  const picker = Object.keys(banks).sort().map(b=>`
+    <div class="bank-group"><div class="bank-label">${esc(b)}</div>
+    ${banks[b].map(c=>`<div class="card-pick ${(S.compareIds||[]).includes(c.id)?'selected':''}" onclick="toggleCompare('${c.id}')" style="display:flex;align-items:center;gap:10px;">
+      ${cardThumb(c)}<div style="flex:1;"><div class="card-pick-name">${esc(c.name)}</div><div class="card-pick-benefits">${c.benefits?.length||0}项权益</div></div></div>`).join('')}
+    </div>`).join('');
+  panel.innerHTML = `
+    <div class="card"><div class="card-title">📊 多卡对比</div><div class="card-meta">选择 2-3 张卡，同场景下横向对比</div></div>
+    <div class="search-box"><input id="compareScenario" placeholder="对比场景（可选）：如 咖啡 / 购物" /></div>
+    <div style="margin-bottom:8px;">已选：<span id="compare-selected" style="color:var(--primary);font-weight:600;">${(S.compareIds||[]).length||0}</span> 张</div>
+    ${picker}
+    <button class="btn-primary" onclick="doCompare()" ${(S.compareIds||[]).length<2?'disabled style="opacity:0.5;"':''}>开始对比</button>
+    <div id="compare-result" style="margin-top:16px;"></div>`;
+  S.compareIds = S.compareIds || [];
+}
+
+function toggleCompare(cid) {
+  S.compareIds = S.compareIds || [];
+  const idx = S.compareIds.indexOf(cid);
+  if(idx>=0) S.compareIds.splice(idx,1);
+  else if(S.compareIds.length<4) S.compareIds.push(cid);
+  renderCompare(document.getElementById('main-panel'));
+}
+
+async function doCompare() {
+  const ids = (S.compareIds||[]).slice(0,4);
+  if(ids.length<2) return;
+  const scenario = document.getElementById('compareScenario').value.trim();
+  const el = document.getElementById('compare-result');
+  el.innerHTML='<div class="loading">⏳ 对比中...</div>';
+  try {
+    const r = await get(`/recommend/compare?card_ids=${ids.join(',')}${scenario?'&scenario='+encodeURIComponent(scenario):''}`);
+    const cards = r.cards||[];
+    if(!cards.length){ el.innerHTML='<div class="empty">无对比结果</div>'; return; }
+    let h = '';
+    if(r.winner) h += `<div class="compare-summary"><div class="cheapest-label">🏆 ${scenario?'"'+esc(scenario)+'" 场景':''} 胜出</div><div class="cheapest-platform">${esc(r.winner.bank)} ${esc(r.winner.name)} — 评分 ${r.winner.score}</div><div style="font-size:13px;color:var(--text-secondary);margin-top:4px;">${esc(r.winner_reason||'')}</div></div>`;
+    h += `<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:13px;"><thead><tr><th style="padding:8px;border-bottom:2px solid var(--border);text-align:left;">维度</th>${cards.map(c=>`<th style="padding:8px;border-bottom:2px solid var(--border);text-align:center;">${esc(c.bank)}<br>${esc(c.name)}</th>`).join('')}</tr></thead><tbody>`;
+    ['返现得分','折扣得分','积分得分','权益数'].forEach(dim=>{
+      h += `<tr><td style="padding:8px;border-bottom:1px solid var(--border);">${dim}</td>${cards.map(c=>`<td style="padding:8px;border-bottom:1px solid var(--border);text-align:center;font-weight:600;">${c.score_breakdown?.[dim]||'—'}</td>`).join('')}</tr>`;
+    });
+    h += `</tbody></table></div>`;
+    if(cards.some(c=>c.benefits&&c.benefits.length)) {
+      h += `<div class="section-label">📋 场景匹配权益</div>`;
+      cards.forEach(c=>{
+        if(!c.benefits||!c.benefits.length) return;
+        h += `<div style="margin-bottom:12px;"><div style="font-weight:600;margin-bottom:4px;">${esc(c.bank)} ${esc(c.name)}</div>${c.benefits.map(b=>`<div class="benefit-item"><h4>${esc(b.title)} ${t(b.benefit_type,'blue')} ${t(b.category,'green')}</h4><p>${esc(b.description)}</p></div>`).join('')}</div>`;
+      });
+    }
+    el.innerHTML = h;
+  } catch(e) { el.innerHTML=`<div class="empty">对比失败: ${esc(e.message)}</div>`; }
+}
+
+/* ======== TAB: 权益提醒 ======== */
+function renderReminders(panel) {
+  panel.innerHTML = `
+    <div class="card"><div class="card-title">📅 权益提醒</div><div class="card-meta">到期提醒、权益使用进度、年费减免追踪</div></div>
+    <div id="reminders-content"><div class="loading">⏳ 加载中...</div></div>`;
+  loadReminders();
+}
+
+async function loadReminders() {
+  const el = document.getElementById('reminders-content');
+  try {
+    const [exp, fee] = await Promise.all([
+      get('/reminders/expiring?within_days=60').catch(()=>null),
+      get('/reminders/annual-fee').catch(()=>null),
+    ]);
+    let h = '';
+    // Expiring alerts
+    if(exp&&exp.expiring_cards&&exp.expiring_cards.length) {
+      h += `<div class="section-label">⚠️ 即将到期</div>`;
+      exp.expiring_cards.forEach(c=>{
+        h += `<div class="card" style="border-left:4px solid var(--warning);"><div class="card-title">${esc(c.bank||'')} ${esc(c.name||'')}</div><div class="card-meta">到期: ${esc(c.expire_date)} · ${c.days_left?esc(c.days_left)+'天后到期':''}</div></div>`;
+      });
+    } else {
+      h += `<div class="empty"><div class="empty-icon">✅</div>暂无即将到期的卡片</div>`;
+    }
+    // Annual fee progress
+    if(fee&&fee.items&&fee.items.length) {
+      h += `<div class="section-label" style="margin-top:16px;">💳 年费减免进度</div>`;
+      fee.items.forEach(f=>{
+        h += `<div class="card"><div class="card-title">${esc(f.bank||'')} ${esc(f.card_name||f.nickname||'')}</div><div class="card-meta">${esc(f.fee_condition||'')}</div>${f.waived?t('已减免','green'):t('未减免','red')}</div>`;
+      });
+    }
+    // Wallet cards with usage tracking
+    if(S.wallet.length) {
+      h += `<div class="section-label" style="margin-top:16px;">📊 权益使用进度</div>`;
+      S.wallet.forEach(c=>{
+        if(!c.card||!c.card.benefits) return;
+        h += `<div class="card"><div class="card-title">${esc(c.card.bank)} ${esc(c.card.name||c.nickname||'')}</div>`;
+        h += c.card.benefits.slice(0,5).map(b=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);"><div><span style="font-size:13px;">${esc(b.title)}</span> ${t(b.benefit_type,'blue')}</div><button class="wallet-btn" style="color:var(--primary);border-color:var(--primary);" onclick="useBenefit('${c.id}','${b.id}')">使用 +1</button></div>`).join('');
+        h += `</div>`;
+      });
+    }
+    el.innerHTML = h || '<div class="empty">添加信用卡到卡包后可查看权益追踪</div>';
+  } catch(e) { el.innerHTML=`<div class="empty">加载失败: ${esc(e.message)}</div>`; }
+}
+
+async function useBenefit(userCardId, benefitId) {
+  try {
+    await post(`/reminders/usage/${benefitId}/use?user_card_id=${userCardId}`);
+    renderReminders(document.getElementById('main-panel'));
+  } catch(e) { alert('记录失败: '+e.message); }
+}
+
+/* ======== TAB: 账单管理 ======== */
+function renderBills(panel) {
+  panel.innerHTML = `
+    <div class="card"><div class="card-title">💰 账单与额度管理</div><div class="card-meta">账单日/还款日、额度追踪、消费记录</div></div>
+    <div id="bills-content"><div class="loading">⏳ 加载中...</div></div>`;
+  loadBills();
+}
+
+async function loadBills() {
+  var el = document.getElementById('bills-content');
+  try {
+    var summary = await get('/bills/summary').catch(function(){return null;});
+    var upcoming = await get('/bills/upcoming?within_days=7').catch(function(){return null;});
+    var h = '';
+    // Summary card
+    if(summary) {
+      h += `<div class="card"><div class="card-title">📊 账单总览</div><div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:8px;">
+        <div class="stat-card"><div class="stat-num">¥${(summary.total_credit_limit||0).toFixed(0)}</div><div class="stat-label">总额度</div></div>
+        <div class="stat-card"><div class="stat-num" style="color:var(--warning);">¥${(summary.total_balance||0).toFixed(0)}</div><div class="stat-label">总欠款</div></div>
+        <div class="stat-card"><div class="stat-num" style="color:${summary.overall_usage_rate>70?'var(--danger)':'var(--primary)'};">${(summary.overall_usage_rate||0).toFixed(1)}%</div><div class="stat-label">使用率</div></div>
+        <div class="stat-card"><div class="stat-num">${summary.unpaid_count||0}</div><div class="stat-label">未还账单</div></div>
+      </div></div>`;
+    }
+    // Upcoming
+    if(upcoming&&upcoming.bills&&upcoming.bills.length){
+      h += `<div class="section-label">📅 ${upcoming.within_days||7}天内待还款</div>`;
+      upcoming.bills.forEach(function(b){
+        var dd = new Date(b.due_date_this_month||b.due_date);
+        var days = Math.ceil((dd - new Date())/(86400000));
+        h += `<div class="card" style="border-left:4px solid ${days<=3?'var(--danger)':'var(--warning)'};"><div class="card-header" style="display:flex;justify-content:space-between;"><div class="card-title">${esc(b.bank||'')} ${esc(b.card_name||b.card_name_display||'')}</div><div style="font-size:13px;color:${days<=3?'var(--danger)':'var(--text-secondary)'};">${days<=0?'今天到期':days+'天后'}</div></div><div class="card-meta">应还: ¥${(b.current_balance||0).toFixed(2)} · 账单日 ${b.statement_date}号 · 还款日 ${b.due_date}号</div></div>`;
+      });
+    }
+    // Wallet cards - bill management
+    if(S.wallet.length){
+      h += `<div class="section-label" style="margin-top:16px;">💳 录入帐单</div>`;
+      h += `<div class="search-box"><select id="billCardSelect">${S.wallet.map(function(c){return `<option value="${c.id}">${esc(c.card?c.card.bank:'')} ${esc(c.card?c.card.name:c.nickname||'')}</option>`;}).join('')}</select></div>`;
+      h += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0;">
+        <div><label style="font-size:12px;">本期金额 ¥</label><input id="billAmount" type="number" step="0.01" placeholder="0.00" style="width:100%;"></div>
+        <div><label style="font-size:12px;">额度 ¥</label><input id="billLimit" type="number" step="0.01" placeholder="从卡信息自动填"></div>
+        <div><label style="font-size:12px;">账单日</label><input id="billStmtDate" type="number" min="1" max="28" value="1"></div>
+        <div><label style="font-size:12px;">还款日</label><input id="billDueDate" type="number" min="1" max="31" value="25"></div>
+      </div>
+      <button class="btn-primary" onclick="addBill()">录入账单</button>`;
+      // Expense input
+      h += `<div class="section-label" style="margin-top:16px;">💸 快捷记账</div>`;
+      h += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0;">
+        <div><label style="font-size:12px;">金额 ¥</label><input id="expAmount" type="number" step="0.01" placeholder="0.00" style="width:100%;"></div>
+        <div><label style="font-size:12px;">分类</label><select id="expCategory"><option>餐饮</option><option>购物</option><option>出行</option><option>娱乐</option><option>生活</option><option>其他</option></select></div>
+        <div style="grid-column:1/3;"><label style="font-size:12px;">备注</label><input id="expDesc" placeholder="如：星巴克咖啡" style="width:100%;"></div>
+      </div>
+      <button class="btn-primary" style="margin-bottom:16px;" onclick="addExpense()">记账</button>`;
+    } else {
+      h += `<div class="empty"><div class="empty-icon">👛</div>先在「卡包」里添加你的信用卡</div>`;
+    }
+    el.innerHTML = h;
+  } catch(e) { el.innerHTML=`<div class="empty">加载失败: ${esc(e.message)}</div>`; }
+}
+
+async function addBill() {
+  var uci = document.getElementById('billCardSelect').value;
+  var data = {
+    user_card_id: uci,
+    current_balance: parseFloat(document.getElementById('billAmount').value)||null,
+    credit_limit: parseFloat(document.getElementById('billLimit').value)||null,
+    statement_date: parseInt(document.getElementById('billStmtDate').value)||1,
+    due_date: parseInt(document.getElementById('billDueDate').value)||25,
+  };
+  if(!data.current_balance){ alert('请输入本期金额'); return; }
+  try {
+    await post('/bills', data);
+    loadBills();
+  } catch(e) { alert('录入失败: '+e.message); }
+}
+
+async function addExpense() {
+  var uci = document.getElementById('billCardSelect').value;
+  var data = {
+    user_card_id: uci,
+    amount: parseFloat(document.getElementById('expAmount').value),
+    category: document.getElementById('expCategory').value,
+    description: document.getElementById('expDesc').value||null,
+  };
+  if(!data.amount||data.amount<=0){ alert('请输入有效金额'); return; }
+  try {
+    await post('/expenses', data);
+    document.getElementById('expAmount').value='';
+    document.getElementById('expDesc').value='';
+    loadBills();
+  } catch(e) { alert('记账失败: '+e.message); }
+}
+
+/* ======== Login / Signup ======== */
+function openLoginModal() {
+  if (S.loggedIn) { showAccountInfo(); return; }
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.innerHTML = `<div class="modal">
+    <div class="modal-header"><div class="modal-title">👤 登录 / 注册</div><button class="modal-close" onclick="this.closest('.modal-overlay').remove()">×</button></div>
+    <div id="login-content">
+      <div style="margin-bottom:16px;"><button class="btn-primary" onclick="showSignup()" style="background:var(--primary);">注册新账号</button></div>
+      <div style="margin-bottom:16px;"><button class="btn-primary" onclick="showLogin()" style="background:#52c41a;">已有账号？登录</button></div>
+      <div style="text-align:center;font-size:12px;color:var(--text-secondary);">当前为匿名用户<br>数据绑定到本浏览器，注册后可跨设备同步</div>
+    </div>
+  </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+}
+
+function showSignup() {
+  document.getElementById('login-content').innerHTML = `
+    <div class="form-group"><label>用户名 *（3-30位）</label><input id="signup-username" placeholder="字母/数字/中文" maxlength="30" /></div>
+    <div class="form-group"><label>密码 *（≥6位）</label><input id="signup-password" type="password" placeholder="至少6位" /></div>
+    <button class="btn-primary" onclick="doSignup()">注册并绑定</button>
+    <div style="text-align:center;margin-top:12px;"><a style="color:var(--primary);cursor:pointer;font-size:13px;" onclick="openLoginModal()">← 返回</a></div>
+  `;
+}
+
+function showLogin() {
+  document.getElementById('login-content').innerHTML = `
+    <div class="form-group"><label>用户名</label><input id="login-username" placeholder="输入用户名" /></div>
+    <div class="form-group"><label>密码</label><input id="login-password" type="password" placeholder="输入密码" /></div>
+    <button class="btn-primary" onclick="doLogin()" style="background:#52c41a;">登录</button>
+    <div style="text-align:center;margin-top:12px;"><a style="color:var(--primary);cursor:pointer;font-size:13px;" onclick="openLoginModal()">← 返回</a></div>
+  `;
+}
+
+async function doSignup() {
+  const username = document.getElementById('signup-username').value.trim();
+  const password = document.getElementById('signup-password').value;
+  if (!username || !password) { alert('请填写用户名和密码'); return; }
+  if (password.length < 6) { alert('密码至少6位'); return; }
+  try {
+    const r = await fetch(API + '/user/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(S.token ? { 'Authorization': 'Bearer ' + S.token } : {}) },
+      body: JSON.stringify({ username, password })
+    });
+    if (!r.ok) { const e = await r.json(); throw Error(e.detail || '注册失败'); }
+    const d = await r.json();
+    S.token = d.token;
+    S.userId = d.user_id;
+    S.loggedIn = true;
+    S.username = d.username || username;
+    localStorage.setItem('ccreward_token', S.token);
+    localStorage.setItem('ccreward_uid', S.userId);
+    localStorage.setItem('ccreward_username', S.username);
+    localStorage.setItem('ccreward_loggedIn', 'true');
+    updateHeaderUser();
+    document.querySelector('.modal-overlay')?.remove();
+  } catch (e) { alert('注册失败: ' + e.message); }
+}
+
+async function doLogin() {
+  const username = document.getElementById('login-username').value.trim();
+  const password = document.getElementById('login-password').value;
+  if (!username || !password) { alert('请填写用户名和密码'); return; }
+  try {
+    const r = await fetch(API + '/user/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+    if (!r.ok) { const e = await r.json(); throw Error(e.detail || '登录失败'); }
+    const d = await r.json();
+    S.token = d.token;
+    S.userId = d.user_id;
+    S.loggedIn = true;
+    S.username = d.username || username;
+    localStorage.setItem('ccreward_token', S.token);
+    localStorage.setItem('ccreward_uid', S.userId);
+    localStorage.setItem('ccreward_username', S.username);
+    localStorage.setItem('ccreward_loggedIn', 'true');
+    updateHeaderUser();
+    document.querySelector('.modal-overlay')?.remove();
+  } catch (e) { alert('登录失败: ' + e.message); }
+}
+
+function showAccountInfo() {
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.innerHTML = `<div class="modal">
+    <div class="modal-header"><div class="modal-title">👤 账号信息</div><button class="modal-close" onclick="this.closest('.modal-overlay').remove()">×</button></div>
+    <div class="card" style="text-align:center;"><div style="font-size:48px;margin-bottom:8px;">👤</div><div style="font-size:18px;font-weight:600;">${esc(S.username || '已登录')}</div></div>
+    <button class="btn-primary" onclick="doLogout()" style="background:var(--danger);">退出登录</button>
+    <div style="text-align:center;margin-top:12px;font-size:12px;color:var(--text-secondary);">退出后数据仍保留在浏览器</div>
+  </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+}
+
+function doLogout() {
+  S.token = '';
+  S.userId = '';
+  S.loggedIn = false;
+  S.username = '';
+  localStorage.removeItem('ccreward_token');
+  localStorage.removeItem('ccreward_uid');
+  localStorage.removeItem('ccreward_username');
+  localStorage.removeItem('ccreward_loggedIn');
+  updateHeaderUser();
+  document.querySelector('.modal-overlay')?.remove();
+}
+
+function updateHeaderUser() {
+  const el = document.getElementById('hdr-user');
+  if (S.loggedIn && S.username) {
+    el.innerHTML = '👤 ' + esc(S.username);
+    el.title = '点击查看账号信息';
+  } else {
+    el.innerHTML = '👤 登录注册';
+    el.title = '点击登录或注册';
+  }
+}
+
+/* ======== card image fallback ======== */
+var BANK_COLORS={'工商银行':'#e41e26,#c4121a','建设银行':'#005bac,#003d7a','农业银行':'#009b77,#007a5e','中国银行':'#b91a2e,#8b1220','招商银行':'#cc0000,#990000','交通银行':'#004b87,#00335c','中信银行':'#c41230,#900018','光大银行':'#7b2d8b,#5a1f65','华夏银行':'#c41230,#900018','民生银行':'#009b77,#007a5e','兴业银行':'#004b87,#00335c','浦发银行':'#004b87,#00335c','广发银行':'#c41230,#900018','平安银行':'#e7651d,#c05010','邮储银行':'#009444,#006630','上海银行':'#005bac,#003d7a','北京银行':'#e41e26,#c4121a','南京银行':'#009b77,#007a5e','广州银行':'#e7651d,#c05010','杭州银行':'#004b87,#00335c','成都银行':'#e41e26,#c4121a','深圳农商银行':'#009b77,#007a5e','苏州银行':'#005bac,#003d7a','江苏银行':'#005bac,#003d7a','宁波银行':'#004b87,#00335c','重庆银行':'#c41230,#900018'};
+function cardThumb(c) {
+  var b=c.bank||''; var colors=BANK_COLORS[b]||'#1677ff,#0958d9';
+  return '<div style="width:48px;height:32px;border-radius:4px;background:linear-gradient(135deg,'+colors+');display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;font-weight:700;flex-shrink:0;">'+esc(b.slice(0,2))+'</div>';
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,33 @@
+# 敏感配置
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# 虚拟环境
+.venv/
+venv/
+
+# 日志
+logs/
+*.log
+
+# 数据库文件
+data/
+*.db
+*.sqlite
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 系统
+.DS_Store
+Thumbs.db

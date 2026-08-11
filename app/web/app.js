@@ -1,0 +1,1307 @@
+/* ========== Toast Notification System (pure CSS+JS) ========== */
+(function() {
+  var style = document.createElement('style');
+  style.textContent = '.toast-container{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none}.toast-item{max-width:90vw;padding:10px 20px;border-radius:8px;font-size:14px;line-height:1.4;color:#fff;box-shadow:0 4px 16px rgba(0,0,0,0.15);animation:toastIn .3s ease,toastOut .3s ease 2.7s forwards;pointer-events:auto;word-break:break-word}.toast-success{background:#52c41a}.toast-error{background:#ff4d4f}.toast-info{background:#1677ff}.toast-warning{background:#faad14;color:#1f1f1f}@keyframes toastIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}@keyframes toastOut{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(-8px)}}';
+  document.head.appendChild(style);
+})();
+function toast(msg, type) {
+  type = type || 'info';
+  var container = document.querySelector('.toast-container');
+  if (!container) { container = document.createElement('div'); container.className = 'toast-container'; document.body.appendChild(container); }
+  var item = document.createElement('div');
+  item.className = 'toast-item toast-' + type;
+  item.textContent = msg;
+  container.appendChild(item);
+  setTimeout(function() { if (item.parentNode) item.parentNode.removeChild(item); }, 3200);
+}
+
+/* ========== Retry Card Helper ========== */
+function retryCard(retryFnCode) {
+  return '<div class="card" style="text-align:center;padding:24px 16px;"><div class="empty-icon">😵</div><div style="font-size:14px;color:var(--text-secondary);margin:8px 0;">加载失败，请检查网络后重试</div><button class="btn-primary" style="max-width:200px;margin:0 auto;" onclick="' + retryFnCode + '">🔄 重试</button></div>';
+}
+
+/* ========== Global Error Handlers ========== */
+window.onerror = function(msg, src, line, col, err) {
+  toast('页面出现异常，请刷新后重试', 'error');
+  console.error('onerror:', msg, src, line, col, err);
+  return true;
+};
+window.addEventListener('unhandledrejection', function(ev) {
+  if (ev.reason && ev.reason.message && ev.reason.message.indexOf('/api/') >= 0) return;
+  toast('操作异常，请稍后重试', 'error');
+  console.error('unhandledrejection:', ev.reason);
+});
+
+/* ========== Detector ========== */
+const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 0 && window.innerWidth < 1024);
+
+/* ========== State ========== */
+const S = {
+  tab:'wallet',
+  overview:null,
+  cards:[],
+  cardsById:{},
+  selectedCardId:null,
+  categories:[],
+  activities:[],
+  activityFilter:{category:null},
+  searchResult:null,
+  wallet:[],
+  token: localStorage.getItem('ccreward_token') || '',
+  userId: localStorage.getItem('ccreward_uid') || '',
+  loggedIn: localStorage.getItem('ccreward_loggedIn') === 'true',
+  username: localStorage.getItem('ccreward_username') || '',
+};
+const API = '/api';
+const ICONS = {抖音:'🎵',美团:'🛵',支付宝:'💙',京东:'🛒',淘宝:'🛍️',饿了么:'🍜',滴滴:'🚗',微信:'💬',其他:'📌'};
+const QUICK = ['瑞幸咖啡','星巴克','麦当劳','肯德基','喜茶','海底捞','奈雪的茶','蜜雪冰城','必胜客','汉堡王','库迪咖啡','霸王茶姬','茶百道','塔斯汀','盒马鲜生'];
+
+/* ========== Global Fetch Wrappers (toast + error handling) ========== */
+async function get(p, opts) {
+  var silent = opts && opts.silent;
+  try {
+    var r = await fetch(API + p, { headers: S.token ? { 'Authorization': 'Bearer ' + S.token } : {} });
+    if (!r.ok) {
+      if (!silent) {
+        var detail = '';
+        try { var d = await r.json(); detail = d.detail || ''; } catch(_) {}
+        if (r.status !== 401) toast(detail || '服务器异常，请稍后重试', 'error');
+      }
+      throw Error(p + ' ' + r.status);
+    }
+    return r.json();
+  } catch (e) {
+    if (!silent) {
+      if (e.message && e.message.indexOf(p) >= 0) { /* already handled */ }
+      else { toast('网络连接失败，请检查网络', 'error'); }
+    }
+    throw e;
+  }
+}
+async function post(p, body, opts) {
+  var silent = opts && opts.silent;
+  try {
+    var r = await fetch(API + p, { method: 'POST', headers: { 'Content-Type': 'application/json', ...(S.token ? { 'Authorization': 'Bearer ' + S.token } : {}) }, body: JSON.stringify(body || {}) });
+    if (!r.ok) {
+      if (!silent) {
+        var detail = '';
+        try { var d = await r.json(); detail = d.detail || ''; } catch(_) {}
+        if (r.status !== 401) toast(detail || '服务器异常，请稍后重试', 'error');
+      }
+      throw Error(p + ' ' + r.status);
+    }
+    return r.json();
+  } catch (e) {
+    if (!silent) {
+      if (e.message && e.message.indexOf(p) >= 0) { /* already handled */ }
+      else { toast('网络连接失败，请检查网络', 'error'); }
+    }
+    throw e;
+  }
+}
+async function patch(p, body, opts) {
+  var silent = opts && opts.silent;
+  try {
+    var r = await fetch(API + p, { method: 'PATCH', headers: { 'Content-Type': 'application/json', ...(S.token ? { 'Authorization': 'Bearer ' + S.token } : {}) }, body: JSON.stringify(body || {}) });
+    if (!r.ok) {
+      if (!silent) {
+        var detail = '';
+        try { var d = await r.json(); detail = d.detail || ''; } catch(_) {}
+        if (r.status !== 401) toast(detail || '服务器异常，请稍后重试', 'error');
+      }
+      throw Error(p + ' ' + r.status);
+    }
+    return r.json();
+  } catch (e) {
+    if (!silent) {
+      if (e.message && e.message.indexOf(p) >= 0) { /* already handled */ }
+      else { toast('网络连接失败，请检查网络', 'error'); }
+    }
+    throw e;
+  }
+}
+async function del(p, opts) {
+  var silent = opts && opts.silent;
+  try {
+    var r = await fetch(API + p, { method: 'DELETE', headers: S.token ? { 'Authorization': 'Bearer ' + S.token } : {} });
+    if (!r.ok) {
+      if (!silent) {
+        var detail = '';
+        try { var d = await r.json(); detail = d.detail || ''; } catch(_) {}
+        if (r.status !== 401) toast(detail || '服务器异常，请稍后重试', 'error');
+      }
+      throw Error(p + ' ' + r.status);
+    }
+    return r.json();
+  } catch (e) {
+    if (!silent) {
+      if (e.message && e.message.indexOf(p) >= 0) { /* already handled */ }
+      else { toast('网络连接失败，请检查网络', 'error'); }
+    }
+    throw e;
+  }
+}
+
+function esc(s) { return s?String(s).replace(/</g,'&lt;').replace(/>/g,'&gt;'):''; }
+
+/* card image with CSS gradient fallback */
+var BANK_COLORS = { '招商银行':['#d4380d','#ff7875'], '工商银行':['#cf1322','#f5222d'], '建设银行':['#003eb3','#1677ff'], '中信银行':['#c41d7f','#eb2f96'], '平安银行':['#fa8c16','#ffa940'], '广发银行':['#237804','#52c41a'], '浦发银行':['#003eb3','#4096ff'], '兴业银行':['#006d75','#13c2c2'], '民生银行':['#531dab','#9254de'], '光大银行':['#ad4e00','#d46b08'], '华夏银行':['#a8071a','#f5222d'], '邮储银行':['#00704a','#52c41a'], '交通银行':['#1d39c4','#597ef7'], '农业银行':['#08979c','#13c2c2'], '中国银行':['#a8071a','#cf1322'], '北京银行':['#003eb3','#2f54eb'], '上海银行':['#d48806','#fadb14'], '广州银行':['#1d39c4','#4096ff'], '杭州银行':['#237804','#52c41a'], '南京银行':['#ad4e00','#d46b08'], '成都银行':['#a8071a','#f5222d'], '深圳农商银行':['#1d39c4','#2f54eb'], '苏州银行':['#531dab','#9254de'], '江苏银行':['#0050b3','#4096ff'], '宁波银行':['#006d75','#08979c'], '重庆银行':['#ad2102','#d4380d'] };
+function bankGradient(bank) { var c = BANK_COLORS[bank] || ['#434343','#8c8c8c']; return 'linear-gradient(135deg,' + c[0] + ',' + c[1] + ')'; }
+function cardThumb(c) { var bg = bankGradient(c.bank); return '<div class="card-thumb-fallback" style="background:' + bg + '">' + esc(c.bank).slice(0,2) + '</div>'; }
+function t(text,type) { return '<span class="tag tag-' + type + '">' + esc(text) + '</span>'; }
+
+async function ensureAuth() {
+  if (S.token || S.loggedIn) return;
+}
+
+/* Sync user data from server → localStorage mirror */
+async function syncUserData() {
+  if (!S.token) return;
+  try {
+    var cards = await get('/user/cards', {silent: true}).catch(function(){ return null; });
+    if (cards !== null) {
+      localStorage.setItem('ccreward_wallet', JSON.stringify(cards));
+      S.wallet = cards;
+    }
+  } catch (_) { /* silently fail */ }
+  try {
+    var results = await Promise.all([
+      get('/bills/summary', {silent: true}).catch(function(){ return null; }),
+      get('/bills/upcoming?within_days=7', {silent: true}).catch(function(){ return null; }),
+    ]);
+    if (results[0] !== null) localStorage.setItem('ccreward_bills_summary', JSON.stringify(results[0]));
+    if (results[1] !== null) localStorage.setItem('ccreward_bills_upcoming', JSON.stringify(results[1]));
+  } catch (_) { /* silently fail */ }
+  try {
+    var r2 = await Promise.all([
+      get('/reminders/expiring?within_days=60', {silent: true}).catch(function(){ return null; }),
+      get('/reminders/annual-fee', {silent: true}).catch(function(){ return null; }),
+    ]);
+    if (r2[0] !== null) localStorage.setItem('ccreward_reminders_expiring', JSON.stringify(r2[0]));
+    if (r2[1] !== null) localStorage.setItem('ccreward_reminders_fee', JSON.stringify(r2[1]));
+  } catch (_) { /* silently fail */ }
+}
+
+/* ========== Platform search launcher ========== */
+var PLATFORM_LINKS = {
+  '抖音': { web:function(kw){return 'https://www.douyin.com/search/'+encodeURIComponent(kw+' 团购');}, app:function(kw){return 'douyin://search/'+encodeURIComponent(kw+' 团购');} },
+  '美团': { web:function(kw){return 'https://i.meituan.com/s/'+encodeURIComponent(kw)+'/';}, app:function(kw){return 'imeituan://www.meituan.com/deal/search?keyword='+encodeURIComponent(kw);} },
+  '饿了么': { web:function(kw){return 'https://h5.ele.me/search?keyword='+encodeURIComponent(kw);}, app:function(kw){return 'eleme://search?keyword='+encodeURIComponent(kw);} },
+  '支付宝': { web:function(kw){return 'https://render.alipay.com/p/s/search?keyword='+encodeURIComponent(kw);}, app:function(kw){return 'alipays://platformapi/startapp?appId=20001&page=pages/home/index&query='+encodeURIComponent('keyword='+kw);} },
+  '京东': { web:function(kw){return 'https://so.m.jd.com/ware/search.action?keyword='+encodeURIComponent(kw);}, app:function(kw){return 'openApp.jdMobile://virtual?params={"category":"jump","des":"search","keyword":"'+kw+'"}';} },
+  '淘宝': { web:function(kw){return 'https://m.taobao.com/search?q='+encodeURIComponent(kw);}, app:function(kw){return 'taobao://m.taobao.com/search?q='+encodeURIComponent(kw);} },
+  '滴滴': { web:function(kw){return 'https://common.diditaxi.com.cn/';}, app:function(kw){return 'diditaxi://';} },
+};
+
+function openDeal(platform, keyword) {
+  var cfg = PLATFORM_LINKS[platform]; if (!cfg) return;
+  var webUrl = cfg.web(keyword), appUrl = cfg.app(keyword);
+  if (isMobile && appUrl) {
+    var ifr = document.createElement('iframe'); ifr.style.display='none'; ifr.src=appUrl; document.body.appendChild(ifr);
+    var timer = setTimeout(function(){ document.body.removeChild(ifr); location.href=webUrl; }, 2500);
+    var c = function(){ clearTimeout(timer); };
+    document.addEventListener('visibilitychange', c, {once:true});
+    window.addEventListener('pagehide', c, {once:true});
+  } else {
+    var a = document.createElement('a'); a.href=webUrl; a.target='_blank'; a.rel='noopener noreferrer';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  }
+}
+
+/* ========== Init ========== */
+(function init() {
+  updateHeaderUser();
+  updateAdminTabVisibility();
+  if (S.loggedIn) {
+    ensureAuth().then(function() {
+      var localWallet = localStorage.getItem('ccreward_wallet');
+      if (localWallet) { syncUserData(); } else { syncUserData(); }
+    });
+  }
+  Promise.all([
+    get('/cards/stats/overview'), get('/activities/categories'), get('/cards?page_size=100'),
+  ]).then(function(results) {
+    var ov = results[0], cats = results[1], cds = results[2];
+    S.overview = ov; S.categories = cats;
+    S.cards = cds.items || cds;
+    S.cards.forEach(function(c){ c.benefits=c.benefits||[]; S.cardsById[c.id]=c; });
+    document.getElementById('hdr-cards').innerHTML = '📊 ' + ov.cards + '卡';
+    document.getElementById('hdr-banks').innerHTML = '🏦 ' + ov.banks + '行';
+    document.getElementById('hdr-activities').innerHTML = '🎫 ' + (ov.activities||'?') + '活动';
+  }).catch(function(e) { console.error(e); });
+
+  document.querySelectorAll('.tab').forEach(function(el){ el.addEventListener('click', function(){
+    document.querySelectorAll('.tab').forEach(function(x){ x.classList.remove('active'); });
+    el.classList.add('active');
+    S.tab = el.dataset.tab;
+    render();
+  }); });
+  render();
+})();
+
+function render() {
+  var p = document.getElementById('main-panel');
+  if (S.tab==='wallet') renderWallet(p);
+  else if (S.tab==='recommend') renderRecommend(p);
+  else if (S.tab==='deals') renderDeals(p);
+  else if (S.tab==='offers') renderBankOffers(p);
+  else if (S.tab==='cards') renderCards(p);
+  else if (S.tab==='compare') renderCompare(p);
+  else if (S.tab==='bills') renderBills(p);
+  else if (S.tab==='reminders') renderReminders(p);
+  else if (S.tab==='all') renderAllActivities(p);
+  else if (S.tab==='spending') renderSpending(p);
+  else if (S.tab==='admin') renderAdmin(p);
+}
+
+/* ======== TAB 0: 我的卡包 ======== */
+async function renderWallet(panel) {
+  if (!S.token) {
+    panel.innerHTML = '<div class="empty"><div class="empty-icon">👤</div>请先登录查看卡包<br><small>点击右上角「登录注册」注册后绑定信用卡权益</small><br><br><button class="btn-primary" onclick="openLoginModal()">🔑 登录 / 注册</button></div>';
+    return;
+  }
+  panel.innerHTML = '<div class="loading">⏳ 加载卡包...</div>';
+  try {
+    S.wallet = await get('/user/cards');
+    localStorage.setItem('ccreward_wallet', JSON.stringify(S.wallet));
+  } catch(e) {
+    var cached = localStorage.getItem('ccreward_wallet');
+    if (cached) {
+      try { S.wallet = JSON.parse(cached); } catch(_) { S.wallet = []; }
+    } else {
+      S.wallet = [];
+    }
+  }
+
+  var html = '';
+
+  if (S.wallet.length === 0) {
+    html = '<div class="empty"><div class="empty-icon">👛</div>卡包是空的<br><small>添加你的信用卡，统一管理权益</small></div>';
+  } else {
+    var totalLimit = S.wallet.filter(function(c){ return c.is_active; }).reduce(function(s,c){ return s+(c.credit_limit||0); }, 0);
+    var activeCount = S.wallet.filter(function(c){ return c.is_active; }).length;
+    html += '<div class="stats-grid"><div class="stat-card"><div class="stat-value">' + activeCount + '</div><div class="stat-label">持有卡片</div></div><div class="stat-card"><div class="stat-value">¥' + (totalLimit/10000).toFixed(1) + '万</div><div class="stat-label">总额度</div></div></div>';
+  }
+
+  S.wallet.forEach(function(c){
+    var bank = c.card ? c.card.bank : '自定义';
+    var name = c.card ? c.card.name : (c.nickname || '未命名');
+    var last4 = c.last_four ? '**** ' + esc(c.last_four) : '****';
+    var expire = c.expire_date ? esc(c.expire_date) : '';
+    var limitStr = c.credit_limit ? '额度 ¥' + (c.credit_limit/10000).toFixed(1) + '万' : '';
+    var issueStr = c.issue_date ? '办卡 ' + esc(c.issue_date) : '';
+    var feeStr = c.annual_fee_condition ? esc(c.annual_fee_condition) : '';
+    var feeWaived = c.annual_fee_waived === true ? '<span style="color:#52c41a">✓ 已减免</span>' : (c.annual_fee_waived === false ? '<span style="color:#ff4d4f">✗ 未减免</span>' : '');
+
+    html += '<div class="wallet-card ' + (c.is_active===false?'inactive':'') + '"><div class="wallet-card-bank">' + esc(bank) + '</div><div class="wallet-card-name">' + esc(c.nickname || name) + '</div><div class="wallet-card-last4">' + last4 + '</div><div class="wallet-card-row"><span>' + limitStr + '</span><span>' + issueStr + (expire?' · 到期 '+expire:'') + '</span></div>' + (feeStr||feeWaived ? '<div class="wallet-card-row"><span>' + feeStr + '</span>' + feeWaived + '</div>' : '') + (c.notes ? '<div class="wallet-card-row"><span>📝 ' + esc(c.notes) + '</span></div>' : '') + '<div class="wallet-card-actions"><button class="wallet-btn" onclick="openEditCard(\'' + c.id + '\')">✏️ 编辑</button><button class="wallet-btn" onclick="toggleCardActive(\'' + c.id + '\', ' + !c.is_active + ')">' + (c.is_active===false?'恢复':'停用') + '</button><button class="wallet-btn" onclick="deleteCard(\'' + c.id + '\')">🗑️ 删除</button></div></div>';
+  });
+
+  html += '<button class="add-card-btn" onclick="openAddCard()">➕ 添加信用卡</button>';
+
+  panel.innerHTML = html;
+}
+
+function openAddCard() {
+  var modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.innerHTML = '<div class="modal" id="add-modal"><div class="modal-header"><div class="modal-title">添加信用卡</div><button class="modal-close" onclick="this.closest(\'.modal-overlay\').remove()">×</button></div><div id="add-content"><div class="search-box"><input id="card-search-input" placeholder="搜索卡名/银行，如：招行 白金" oninput="searchCardsForAdd()" /></div><div id="card-search-results" style="min-height:60px;"></div><div class="section-label">或手动录入自定义卡</div><button class="add-card-btn" onclick="showManualEntry()">📝 手动录入（不在库中的卡）</button></div></div>';
+  document.body.appendChild(modal);
+  modal.addEventListener('click', function(e){ if (e.target===modal) modal.remove(); });
+  var focusEl = document.getElementById('card-search-input');
+  if (focusEl) focusEl.focus();
+}
+
+var searchTimer = null;
+function searchCardsForAdd() {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(function() {
+    var kw = document.getElementById('card-search-input').value.trim();
+    var el = document.getElementById('card-search-results');
+    if (!kw) { el.innerHTML = ''; return; }
+    el.innerHTML = '<div class="loading">搜索中...</div>';
+    get('/user/cards/search?keyword=' + encodeURIComponent(kw)).then(function(results){
+      el.innerHTML = results.length ? results.map(function(c){ return '<div class="search-result-item" onclick="selectCardForAdd(' + JSON.stringify(c).replace(/"/g, '&quot;') + ')"><div><div style="font-weight:500">' + esc(c.bank) + ' ' + esc(c.name) + '</div><div style="font-size:12px;color:var(--text-secondary)">' + esc(c.network) + ' · ' + esc(c.level) + ' · ' + esc(c.annual_fee) + '</div></div><div style="color:var(--primary)">添加 ›</div></div>'; }).join('') : '<div class="empty">未找到，试试手动录入</div>';
+    }).catch(function(e){ el.innerHTML = '<div class="empty">搜索失败</div>'; });
+  }, 300);
+}
+
+function selectCardForAdd(card) {
+  document.getElementById('add-content').innerHTML = '<div class="card" style="background:var(--primary-light);border:1px solid var(--primary);"><div style="font-weight:600;">' + esc(card.bank) + ' ' + esc(card.name) + '</div><div style="font-size:13px;color:var(--text-secondary)">' + esc(card.network) + ' · ' + esc(card.level) + ' · 年费: ' + esc(card.annual_fee) + '</div></div><div class="form-group"><label>昵称（可选）</label><input id="add-nickname" placeholder="如：招行主卡" /></div><div class="form-row"><div class="form-group"><label>卡号后四位</label><input id="add-last4" maxlength="4" placeholder="1234" /></div><div class="form-group"><label>额度（元）</label><input id="add-limit" type="number" placeholder="80000" /></div></div><div class="form-row"><div class="form-group"><label>办卡日期</label><input id="add-issue" placeholder="2024-03" /></div><div class="form-group"><label>到期月</label><input id="add-expire" placeholder="2029-08" /></div></div><div class="form-group"><label>年费减免条件</label><input id="add-fee-cond" placeholder="如：年刷6次免年费" /></div><div class="form-group"><label>备注</label><textarea id="add-notes" rows="2" placeholder="如：主刷卡 / 9分生活"></textarea></div><button class="btn-primary" onclick="confirmAddCard(\'' + card.id + '\')">添加到卡包</button>';
+}
+
+function showManualEntry() {
+  document.getElementById('add-content').innerHTML = '<div class="card" style="background:var(--primary-light);border:1px solid var(--primary);"><div style="font-weight:600;">📝 自定义卡片</div><div style="font-size:13px;color:var(--text-secondary)">不在种子库中的卡，手动录入</div></div><div class="form-group"><label>卡片名称 *</label><input id="add-nickname" placeholder="如：工行畅通卡" /></div><div class="form-row"><div class="form-group"><label>卡号后四位</label><input id="add-last4" maxlength="4" placeholder="1234" /></div><div class="form-group"><label>额度（元）</label><input id="add-limit" type="number" placeholder="80000" /></div></div><div class="form-row"><div class="form-group"><label>办卡日期</label><input id="add-issue" placeholder="2024-03" /></div><div class="form-group"><label>到期月</label><input id="add-expire" placeholder="2029-08" /></div></div><div class="form-group"><label>年费减免条件</label><input id="add-fee-cond" placeholder="如：年刷6次免年费" /></div><div class="form-group"><label>备注</label><textarea id="add-notes" rows="2" placeholder="备注"></textarea></div><button class="btn-primary" onclick="confirmAddCard(\'\')">添加到卡包</button>';
+}
+
+async function confirmAddCard(cardId) {
+  var body = {
+    card_id: cardId || '',
+    nickname: val('add-nickname'),
+    last_four: val('add-last4'),
+    credit_limit: parseFloat(val('add-limit')) || null,
+    issue_date: val('add-issue'),
+    expire_date: val('add-expire'),
+    annual_fee_condition: val('add-fee-cond'),
+    notes: val('add-notes'),
+  };
+  try {
+    await post('/user/cards', body);
+    var mo = document.querySelector('.modal-overlay');
+    if (mo) mo.remove();
+    await renderWallet(document.getElementById('main-panel'));
+  } catch(e) {
+    toast('添加失败', 'error');
+  }
+}
+
+function val(id) { var el = document.getElementById(id); return el ? el.value.trim() : ''; }
+
+function openEditCard(userCardId) {
+  var c = S.wallet.find(function(x){ return x.id===userCardId; });
+  if (!c) return;
+  var modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.innerHTML = '<div class="modal"><div class="modal-header"><div class="modal-title">编辑卡片信息</div><button class="modal-close" onclick="this.closest(\'.modal-overlay\').remove()">×</button></div><div class="card" style="background:var(--primary-light);margin-bottom:16px;"><div style="font-weight:600;">' + esc(c.card?c.card.bank:'自定义') + ' ' + esc(c.card?c.card.name:c.nickname||'') + '</div></div><div class="form-group"><label>昵称</label><input id="edit-nickname" value="' + esc(c.nickname||'') + '" /></div><div class="form-row"><div class="form-group"><label>卡号后四位</label><input id="edit-last4" maxlength="4" value="' + esc(c.last_four||'') + '" /></div><div class="form-group"><label>额度（元）</label><input id="edit-limit" type="number" value="' + (c.credit_limit||'') + '" /></div></div><div class="form-row"><div class="form-group"><label>办卡日期</label><input id="edit-issue" value="' + esc(c.issue_date||'') + '" placeholder="YYYY-MM" /></div><div class="form-group"><label>到期月</label><input id="edit-expire" value="' + esc(c.expire_date||'') + '" placeholder="YYYY-MM" /></div></div><div class="form-group"><label>年费减免条件</label><input id="edit-fee-cond" value="' + esc(c.annual_fee_condition||'') + '" /></div><div class="form-group"><label>年费是否已减免</label><select id="edit-fee-waived"><option value="">未知</option><option value="true" ' + (c.annual_fee_waived===true?'selected':'') + '>已减免</option><option value="false" ' + (c.annual_fee_waived===false?'selected':'') + '>未减免</option></select></div><div class="form-group"><label>备注</label><textarea id="edit-notes" rows="2">' + esc(c.notes||'') + '</textarea></div><button class="btn-primary" onclick="confirmEditCard(\'' + c.id + '\')">保存</button></div>';
+  document.body.appendChild(modal);
+  modal.addEventListener('click', function(e){ if (e.target===modal) modal.remove(); });
+}
+
+async function confirmEditCard(userCardId) {
+  var waivered = val('edit-fee-waived');
+  var body = {
+    nickname: val('edit-nickname') || null,
+    last_four: val('edit-last4') || null,
+    credit_limit: parseFloat(val('edit-limit')) || null,
+    issue_date: val('edit-issue') || null,
+    expire_date: val('edit-expire') || null,
+    annual_fee_condition: val('edit-fee-cond') || null,
+    annual_fee_waived: waivered === '' ? null : waivered === 'true',
+    notes: val('edit-notes') || null,
+  };
+  try {
+    await patch('/user/cards/' + userCardId, body);
+    var mo = document.querySelector('.modal-overlay');
+    if (mo) mo.remove();
+    try { await syncUserData(); } catch(_) {}
+    await renderWallet(document.getElementById('main-panel'));
+  } catch(e) { toast('保存失败', 'error'); }
+}
+
+async function toggleCardActive(userCardId, active) {
+  try {
+    await patch('/user/cards/' + userCardId, {is_active: active});
+    try { await syncUserData(); } catch(_) {}
+    await renderWallet(document.getElementById('main-panel'));
+  } catch(e) { toast('操作失败', 'error'); }
+}
+
+async function deleteCard(userCardId) {
+  if (!confirm('确定删除这张卡？')) return;
+  try {
+    await del('/user/cards/' + userCardId);
+    await renderWallet(document.getElementById('main-panel'));
+  } catch(e) { toast('删除失败', 'error'); }
+}
+
+/* ======== TAB 1: Deals ======== */
+function renderDeals(panel) {
+  panel.innerHTML = '<div class="search-box"><input id="searchInput" placeholder="搜商品比价：瑞幸咖啡 / 星巴克 / 海底捞..." onkeydown="if(event.key===\'Enter\')doSearch()"><button onclick="doSearch()">比价</button></div><div class="quick-tags">' + QUICK.map(function(k){ return '<span class="quick-tag" onclick="document.getElementById(\'searchInput\').value=\'' + k + '\';doSearch()">' + k + '</span>'; }).join('') + '</div><div id="deals-result"><div class="empty"><div class="empty-icon">🔍</div>输入关键词搜索，看各平台价格参考<br><small>点「去XX搜」跳转平台App/网页，在平台内查看真实优惠下单</small></div></div>';
+  var si = document.getElementById('searchInput');
+  if (si) si.focus();
+}
+
+async function doSearch() {
+  var kw = document.getElementById('searchInput').value.trim();
+  var el = document.getElementById('deals-result');
+  if (!kw) { el.innerHTML = '<div class="empty">请输入搜索关键词</div>'; return; }
+  el.innerHTML = '<div class="loading">⏳ 搜索中...</div>';
+  try {
+    S.searchResult = await get('/activities/compare?keyword=' + encodeURIComponent(kw));
+    renderDealsResult();
+  } catch(e) { el.innerHTML = retryCard('doSearch()'); }
+}
+
+function renderDealsResult() {
+  var r = S.searchResult, el = document.getElementById('deals-result');
+  if (!r.items.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">😕</div>未找到"' + esc(r.keyword) + '"</div>'; return; }
+  var cheapest = r.items.find(function(i){ return i.is_cheapest; });
+  var summary = r.cheapest_price!=null ? '<div class="compare-summary"><div class="cheapest-label">"' + esc(r.keyword) + '" 比价结果</div><div class="cheapest-value">¥' + r.cheapest_price + '</div><div class="cheapest-platform">🏆 最低价平台：' + esc(r.cheapest_platform) + '</div>' + (cheapest ? '<button style="margin-top:12px;padding:10px 32px;background:var(--success);color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;" onclick="openDeal(\'' + esc(cheapest.platform_label) + '\',\'' + esc(r.keyword) + '\')">去 ' + esc(r.cheapest_platform) + ' 搜索 ¥' + r.cheapest_price + ' →</button>' : '') + '</div>' : '';
+  var items = r.items.map(function(i){
+    var hasP = i.activity_price!=null&&i.activity_price>0;
+    var priceHtml = hasP ? '<span class="price-now">¥' + i.activity_price + '</span>' + (i.original_price>i.activity_price?'<span class="price-old">¥' + i.original_price + '</span>':'') : '<span class="price-now" style="font-size:14px;">见详情</span>';
+    var plt = esc(i.platform_label);
+    return '<div class="activity-item ' + (i.is_cheapest?'cheapest':'') + '"><div class="activity-top"><div class="activity-name">' + esc(i.title) + ' ' + t(plt,'blue') + ' ' + (i.is_cheapest?t('最低价','green'):'') + '</div><div class="activity-price-box">' + priceHtml + '</div></div><div class="activity-desc">' + esc(i.discount_description) + '</div>' + (i.usage_conditions?'<div class="activity-conds">📋 ' + esc(i.usage_conditions) + '</div>':'') + '<div class="activity-bottom"><span style="font-size:12px;color:var(--text-secondary);">' + (ICONS[plt]||'📌') + ' ' + plt + '平台</span><button class="btn-deal ' + (i.is_cheapest?'cheapest-deal':'') + '" onclick="openDeal(\'' + plt + '\',\'' + esc(r.keyword) + '\')">去' + plt + '搜 →</button></div><div class="deal-hint">' + (isMobile ? '📱 唤起'+plt+'App → 搜索优惠' : '🖥️ 打开'+plt+'搜索页') + '</div></div>';
+  }).join('');
+  el.innerHTML = summary + '<div class="section-label">共 ' + r.items.length + ' 条优惠 · 覆盖 ' + r.total_platforms + ' 平台</div>' + items;
+}
+
+/* ======== TAB 2: Cards ======== */
+function renderCards(panel) {
+  if (!S.cards.length) { panel.innerHTML = '<div class="loading">加载卡片...</div>'; return; }
+  if (!S.selectedCardId) S.selectedCardId = S.cards[0].id;
+  var vc = S.cardsById[S.selectedCardId];
+  var banks = {}; S.cards.forEach(function(c){ (banks[c.bank]=banks[c.bank]||[]).push(c); });
+  var bp = Object.keys(banks).sort().map(function(b){
+    return '<div class="bank-group"><div class="bank-label">' + esc(b) + '（' + banks[b].length + '张）</div>' + banks[b].map(function(c){ return '<div class="card-pick ' + (c.id===S.selectedCardId?'selected':'') + '" onclick="S.selectedCardId=\'' + c.id + '\';render()" style="display:flex;align-items:center;gap:10px;">' + cardThumb(c) + '<div style="flex:1;"><div class="card-pick-name">' + esc(c.name) + '</div><div class="card-pick-benefits">' + c.network + ' · ' + c.level + ' · ' + (c.benefits?c.benefits.length:0) + '项权益</div></div><div style="color:var(--primary);font-size:16px;">›</div></div>'; }).join('') + '</div>';
+  }).join('');
+  var bh = vc.benefits&&vc.benefits.length ? vc.benefits.map(function(b){ return '<div class="benefit-item"><h4>' + esc(b.title) + ' ' + t(b.benefit_type,'blue') + ' ' + t(b.category,'green') + '</h4><p>' + esc(b.description) + '</p><div class="benefit-tags">' + (b.value_text?t(b.value_text,'orange'):'') + (b.discount_percent?t(b.discount_percent+'折','red'):'') + (b.points_per_yuan?t(b.points_per_yuan+'积分/元','blue'):'') + (b.cashback_percent?t('返'+b.cashback_percent+'%','red'):'') + (b.usage_limit?t(b.usage_limit,'orange'):'') + '</div></div>'; }).join('') : '<div class="empty">暂无权益数据</div>';
+  panel.innerHTML = '<div class="card"><div class="card-header"><div class="card-title">' + esc(vc.bank) + ' ' + esc(vc.name) + '</div><div>' + t(vc.network,'blue') + ' ' + t(vc.level,'green') + '</div></div><div class="card-meta">年费：' + esc(vc.annual_fee) + (vc.description?' · '+esc(vc.description):'') + '</div></div><div class="section-label">📋 选择卡片（点击切换）</div>' + bp + '<div class="section-label">🎁 ' + vc.bank + ' ' + vc.name + ' 权益（' + (vc.benefits?vc.benefits.length:0) + '项）</div>' + bh + '<div class="section-label">🎯 积分兑换</div><div id="redemptions-area"><div class="loading">加载中...</div></div>';
+  get('/cards/' + vc.id + '/redemptions').then(function(items){
+    document.getElementById('redemptions-area').innerHTML = items.length ? items.map(function(r){ return '<div class="redemption-item"><div class="redemption-info"><h4>' + esc(r.item_name) + '</h4><p>' + esc(r.merchant_name) + ' · ' + esc(r.category) + '</p></div><div class="redemption-right"><div class="redemption-points">' + r.points_required + '积分</div>' + (r.cash_value?'<div class="redemption-value">≈¥' + r.cash_value + '</div>':'') + '</div></div>'; }).join('') : '<div class="empty">暂无兑换商品</div>';
+  }).catch(function(){ document.getElementById('redemptions-area').innerHTML = '<div class="empty">加载失败</div>'; });
+}
+
+/* ======== TAB: 银行优惠 ======== */
+function renderBankOffers(panel) {
+  panel.innerHTML = '<div class="loading">⏳ 加载银行优惠...</div>';
+  get('/bank-offers').then(function(data) {
+    var offers = data.items || data || [];
+    if (!offers.length) { panel.innerHTML = '<div class="empty"><div class="empty-icon">🏦</div>暂无银行优惠数据</div>'; return; }
+    var grouped = {};
+    offers.forEach(function(o) { (grouped[o.bank_name||o.bank] = grouped[o.bank_name||o.bank] || []).push(o); });
+    var html = '';
+    Object.keys(grouped).sort().forEach(function(bank) {
+      var items = grouped[bank];
+      html += '<div class="bank-group"><div class="bank-label">' + esc(bank) + '（' + items.length + '条）</div>';
+      items.forEach(function(o) {
+        var expired = o.valid_to && new Date(o.valid_to) < new Date();
+        var stopped = o.status === '已停用' || o.status === '已过期' || o.status === '已失效' || o.status === 'EXPIRED';
+        var statusTag = stopped ? t('已停用','red') : expired ? t('已过期','red') : t('进行中','green');
+        var validText = o.valid_to ? '截至 ' + o.valid_to : (o.valid_period || '长期有效');
+        html += '<div class="activity-item' + (expired?'':'') + '" style="opacity:' + (expired||stopped?'0.55':'1') + '"><div class="activity-top"><div class="activity-name">' + esc(o.title) + '</div><div>' + statusTag + '</div></div><div class="activity-desc">' + esc(o.description||o.offer_detail||'') + '</div><div class="activity-conds">' + esc(o.bank_name||o.bank) + ' · ' + esc(o.category||'通用') + ' · ' + esc(validText) + '</div>' + (o.discount_description ? '<div class="activity-conds" style="margin-left:6px;">' + esc(o.discount_description) + '</div>' : '') + (o.terms_conditions ? '<div style="font-size:11px;color:var(--text-secondary);margin-top:6px;">📋 ' + esc(o.terms_conditions) + '</div>' : '') + '</div>';
+      });
+      html += '</div>';
+    });
+    panel.innerHTML = html;
+  }).catch(function(e) { panel.innerHTML = retryCard('renderBankOffers(document.getElementById(\'main-panel\'))'); });
+}
+
+/* ======== TAB 3: All Activities ======== */
+function renderAllActivities(panel) {
+  panel.innerHTML = '<div id="cat-filters" class="filter-row"><div class="loading">加载分类...</div></div><div class="section-label" id="act-count">加载中...</div><div id="act-list"><div class="loading">加载活动...</div></div>';
+  loadActivities();
+}
+
+async function loadActivities() {
+  try {
+    var r = await get('/activities?page_size=100&sort=price');
+    S.activities = r.items || [];
+    renderActivityFilters();
+    renderActivityList();
+  } catch(e) { document.getElementById('act-list').innerHTML = retryCard('loadActivities()'); }
+}
+
+function renderActivityFilters() {
+  if (!S.categories.length) return;
+  var el = document.getElementById('cat-filters');
+  el.innerHTML = '<span class="filter-chip ' + (!S.activityFilter.category?'active':'') + '" onclick="S.activityFilter.category=null;renderActivityList();renderActivityFilters()">全部<span class="badge">' + S.activities.length + '</span></span>' + S.categories.map(function(c){ return '<span class="filter-chip ' + (S.activityFilter.category===c.category?'active':'') + '" onclick="S.activityFilter.category=\'' + c.category + '\';renderActivityList();renderActivityFilters()">' + esc(c.category) + '<span class="badge">' + c.count + '</span></span>'; }).join('');
+}
+
+function renderActivityList() {
+  var filtered = S.activityFilter.category ? S.activities.filter(function(a){ return a.category===S.activityFilter.category; }) : S.activities;
+  document.getElementById('act-count').textContent = '📋 共 ' + filtered.length + ' 条活动';
+  var el = document.getElementById('act-list');
+  if (!filtered.length) { el.innerHTML = '<div class="empty">该分类暂无活动</div>'; return; }
+  el.innerHTML = filtered.map(function(a){
+    var hasP = a.activity_price!=null&&a.activity_price>0;
+    var priceHtml = hasP ? '<span class="price-now">¥' + a.activity_price + '</span>' + (a.original_price>a.activity_price?'<span class="price-old">¥' + a.original_price + '</span>':'') : '<span class="price-now" style="font-size:14px;">见详情</span>';
+    var plt = esc(a.platform);
+    var kw = esc(a.merchant_name || a.product_name || '');
+    return '<div class="activity-item"><div class="activity-top"><div class="activity-name">' + esc(a.title) + ' ' + t(plt,'blue') + ' ' + t(a.category,'green') + '</div><div class="activity-price-box">' + priceHtml + '</div></div><div class="activity-desc">' + esc(a.discount_description) + '</div>' + (a.usage_conditions?'<div class="activity-conds">📋 ' + esc(a.usage_conditions) + '</div>':'') + '<div class="activity-bottom"><span style="font-size:12px;color:var(--text-secondary);">' + esc(a.merchant_name) + ' · ' + (ICONS[plt]||'') + ' ' + plt + '</span><button class="btn-deal" onclick="openDeal(\'' + plt + '\',\'' + kw + '\')">去' + plt + '搜 →</button></div><div class="deal-hint">' + (isMobile?'📱 唤起'+plt+'App':'🖥️ 打开'+plt+'搜索页') + '</div></div>';
+  }).join('');
+}
+
+/* ======== TAB: 场景推荐 ======== */
+function renderRecommend(panel) {
+  panel.innerHTML = '<div class="card"><div class="card-title">🎯 场景推荐</div><div class="card-meta">输入消费场景，推荐最合适的信用卡</div></div><div class="search-box"><input id="recommendInput" placeholder="如：星巴克 / 加油 / 外卖 / 看电影..." onkeydown="if(event.key===\'Enter\')doRecommend()"><button onclick="doRecommend()">推荐</button></div><div class="quick-tags">' + ['星巴克','瑞幸咖啡','加油','外卖','看电影','火锅','京东购物','高铁出行'].map(function(k){ return '<span class="quick-tag" onclick="document.getElementById(\'recommendInput\').value=\'' + k + '\';doRecommend()">' + k + '</span>'; }).join('') + '</div><div id="recommend-result"><div class="empty"><div class="empty-icon">💡</div>输入消费场景，看看哪张卡最划算</div></div>';
+}
+
+async function doRecommend() {
+  var kw = document.getElementById('recommendInput').value.trim();
+  var el = document.getElementById('recommend-result');
+  if (!kw) { el.innerHTML = '<div class="empty">请输入场景关键词</div>'; return; }
+  el.innerHTML = '<div class="loading">⏳ 分析中...</div>';
+  try {
+    var r = await get('/recommend/scenario?scenario=' + encodeURIComponent(kw));
+    if (!r.recommendations||!r.recommendations.length) { el.innerHTML = '<div class="empty">暂无匹配推荐</div>'; return; }
+    el.innerHTML = '<div class="section-label">"' + esc(kw) + '" 推荐 ' + r.recommendations.length + ' 张卡</div>' + r.recommendations.map(function(c,i){ return '<div class="card" style="' + (i===0?'border:2px solid var(--primary);background:var(--primary-light);':'') + '"><div class="card-header"><div class="card-title">' + (i===0?'🏆 ':'') + (c.card?c.card.bank||'':'') + ' ' + (c.card?c.card.name||'':'') + ' ' + t('得分'+c.score,'blue') + '</div></div><div class="card-meta">' + (c.reason||'') + '</div>' + ((c.matched_benefits||[]).length?'<div style="margin-top:8px;">' + c.matched_benefits.map(function(b){ return '<div class="benefit-item"><h4>' + esc(b.title) + ' ' + t(b.benefit_type,'blue') + ' ' + t(b.category,'green') + '</h4><p>' + esc(b.description) + '</p></div>'; }).join('') + '</div>':'') + '</div>'; }).join('');
+  } catch(e) { el.innerHTML = retryCard('doRecommend()'); }
+}
+
+/* ======== TAB: 多卡对比 ======== */
+function renderCompare(panel) {
+  if (!S.cards.length) { panel.innerHTML = '<div class="loading">加载卡片...</div>'; return; }
+  var banks = {}; S.cards.forEach(function(c){ (banks[c.bank]=banks[c.bank]||[]).push(c); });
+  var picker = Object.keys(banks).sort().map(function(b){
+    return '<div class="bank-group"><div class="bank-label">' + esc(b) + '</div>' + banks[b].map(function(c){ return '<div class="card-pick ' + ((S.compareIds||[]).indexOf(c.id)>=0?'selected':'') + '" onclick="toggleCompare(\'' + c.id + '\')" style="display:flex;align-items:center;gap:10px;">' + cardThumb(c) + '<div style="flex:1;"><div class="card-pick-name">' + esc(c.name) + '</div><div class="card-pick-benefits">' + (c.benefits?c.benefits.length:0) + '项权益</div></div></div>'; }).join('') + '</div>';
+  }).join('');
+  panel.innerHTML = '<div class="card"><div class="card-title">📊 多卡对比</div><div class="card-meta">选择 2-3 张卡，同场景下横向对比</div></div><div class="search-box"><input id="compareScenario" placeholder="对比场景（可选）：如 咖啡 / 购物" /></div><div style="margin-bottom:8px;">已选：<span id="compare-selected" style="color:var(--primary);font-weight:600;">' + ((S.compareIds||[]).length||0) + '</span> 张</div>' + picker + '<button class="btn-primary" onclick="doCompare()" ' + ((S.compareIds||[]).length<2?'disabled style="opacity:0.5;"':'') + '>开始对比</button><div id="compare-result" style="margin-top:16px;"></div>';
+  S.compareIds = S.compareIds || [];
+}
+
+function toggleCompare(cid) {
+  S.compareIds = S.compareIds || [];
+  var idx = S.compareIds.indexOf(cid);
+  if (idx>=0) S.compareIds.splice(idx,1);
+  else if (S.compareIds.length<4) S.compareIds.push(cid);
+  renderCompare(document.getElementById('main-panel'));
+}
+
+async function doCompare() {
+  var ids = (S.compareIds||[]).slice(0,4);
+  if (ids.length<2) return;
+  var scenario = document.getElementById('compareScenario').value.trim();
+  var el = document.getElementById('compare-result');
+  el.innerHTML = '<div class="loading">⏳ 对比中...</div>';
+  try {
+    var r = await get('/recommend/compare?card_ids=' + ids.join(',') + (scenario?'&scenario='+encodeURIComponent(scenario):''));
+    var cards = r.cards||[];
+    if (!cards.length) { el.innerHTML = '<div class="empty">无对比结果</div>'; return; }
+    var h = '';
+    if (r.winner) h += '<div class="compare-summary"><div class="cheapest-label">🏆 ' + (scenario?'"'+esc(scenario)+'" 场景':'') + ' 胜出</div><div class="cheapest-platform">' + esc(r.winner.bank) + ' ' + esc(r.winner.name) + ' — 评分 ' + r.winner.score + '</div><div style="font-size:13px;color:var(--text-secondary);margin-top:4px;">' + esc(r.winner_reason||'') + '</div></div>';
+    h += '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:13px;"><thead><tr><th style="padding:8px;border-bottom:2px solid var(--border);text-align:left;">维度</th>' + cards.map(function(c){ return '<th style="padding:8px;border-bottom:2px solid var(--border);text-align:center;">' + esc(c.bank) + '<br>' + esc(c.name) + '</th>'; }).join('') + '</tr></thead><tbody>';
+    ['返现得分','折扣得分','积分得分','权益数'].forEach(function(dim){
+      h += '<tr><td style="padding:8px;border-bottom:1px solid var(--border);">' + dim + '</td>' + cards.map(function(c){ return '<td style="padding:8px;border-bottom:1px solid var(--border);text-align:center;font-weight:600;">' + (c.score_breakdown?c.score_breakdown[dim]:'—') || '—' + '</td>'; }).join('') + '</tr>';
+    });
+    h += '</tbody></table></div>';
+    if (cards.some(function(c){ return c.benefits&&c.benefits.length; })) {
+      h += '<div class="section-label">📋 场景匹配权益</div>';
+      cards.forEach(function(c){
+        if (!c.benefits||!c.benefits.length) return;
+        h += '<div style="margin-bottom:12px;"><div style="font-weight:600;margin-bottom:4px;">' + esc(c.bank) + ' ' + esc(c.name) + '</div>' + c.benefits.map(function(b){ return '<div class="benefit-item"><h4>' + esc(b.title) + ' ' + t(b.benefit_type,'blue') + ' ' + t(b.category,'green') + '</h4><p>' + esc(b.description) + '</p></div>'; }).join('') + '</div>';
+      });
+    }
+    el.innerHTML = h;
+  } catch(e) { el.innerHTML = retryCard('doCompare()'); }
+}
+
+/* ======== TAB: 权益提醒 ======== */
+function renderReminders(panel) {
+  panel.innerHTML = '<div class="card"><div class="card-title">📅 权益提醒</div><div class="card-meta">到期提醒、权益使用进度、年费减免追踪</div></div><div id="reminders-content"><div class="loading">⏳ 加载中...</div></div>';
+  loadReminders();
+}
+
+async function loadReminders() {
+  var el = document.getElementById('reminders-content');
+  try {
+    var exp = await get('/reminders/expiring?within_days=60', {silent: true}).catch(function(){ return null; });
+    var fee = await get('/reminders/annual-fee', {silent: true}).catch(function(){ return null; });
+    var h = '';
+    if (exp&&exp.expiring_cards&&exp.expiring_cards.length) {
+      h += '<div class="section-label">⚠️ 即将到期</div>';
+      exp.expiring_cards.forEach(function(c){
+        h += '<div class="card" style="border-left:4px solid var(--warning);"><div class="card-title">' + esc(c.bank||'') + ' ' + esc(c.name||'') + '</div><div class="card-meta">到期: ' + esc(c.expire_date) + ' · ' + (c.days_left?esc(c.days_left)+'天后到期':'') + '</div></div>';
+      });
+    } else {
+      h += '<div class="empty"><div class="empty-icon">✅</div>暂无即将到期的卡片</div>';
+    }
+    if (fee&&fee.items&&fee.items.length) {
+      h += '<div class="section-label" style="margin-top:16px;">💳 年费减免进度</div>';
+      fee.items.forEach(function(f){
+        h += '<div class="card"><div class="card-title">' + esc(f.bank||'') + ' ' + esc(f.card_name||f.nickname||'') + '</div><div class="card-meta">' + esc(f.fee_condition||'') + '</div>' + (f.waived?t('已减免','green'):t('未减免','red')) + '</div>';
+      });
+    }
+    if (S.wallet.length) {
+      h += '<div class="section-label" style="margin-top:16px;">📊 权益使用进度</div>';
+      S.wallet.forEach(function(c){
+        if (!c.card||!c.card.benefits) return;
+        h += '<div class="card"><div class="card-title">' + esc(c.card.bank) + ' ' + esc(c.card.name||c.nickname||'') + '</div>';
+        h += c.card.benefits.slice(0,5).map(function(b){ return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);"><div><span style="font-size:13px;">' + esc(b.title) + '</span> ' + t(b.benefit_type,'blue') + '</div><button class="wallet-btn" style="color:var(--primary);border-color:var(--primary);" onclick="useBenefit(\'' + c.id + '\',\'' + b.id + '\')">使用 +1</button></div>'; }).join('');
+        h += '</div>';
+      });
+    }
+    el.innerHTML = h || '<div class="empty">添加信用卡到卡包后可查看权益追踪</div>';
+  } catch(e) { el.innerHTML = retryCard('loadReminders()'); }
+}
+
+async function useBenefit(userCardId, benefitId) {
+  try {
+    await post('/reminders/usage/' + benefitId + '/use?user_card_id=' + userCardId);
+    renderReminders(document.getElementById('main-panel'));
+  } catch(e) { toast('记录失败', 'error'); }
+}
+
+/* ======== TAB: 账单管理 ======== */
+function renderBills(panel) {
+  panel.innerHTML = '<div class="card"><div class="card-title">💰 账单与额度管理</div><div class="card-meta">账单日/还款日、额度追踪、消费记录</div></div><div id="bills-content"><div class="loading">⏳ 加载中...</div></div>';
+  loadBills();
+}
+
+async function loadBills() {
+  var el = document.getElementById('bills-content');
+  try {
+    var summary = await get('/bills/summary', {silent: true}).catch(function(){ return null; });
+    var upcoming = await get('/bills/upcoming?within_days=7', {silent: true}).catch(function(){ return null; });
+    var h = '';
+    if (summary) {
+      h += '<div class="card"><div class="card-title">📊 账单总览</div><div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:8px;"><div class="stat-card"><div class="stat-num">¥' + (summary.total_credit_limit||0).toFixed(0) + '</div><div class="stat-label">总额度</div></div><div class="stat-card"><div class="stat-num" style="color:var(--warning);">¥' + (summary.total_balance||0).toFixed(0) + '</div><div class="stat-label">总欠款</div></div><div class="stat-card"><div class="stat-num" style="color:' + (summary.overall_usage_rate>70?'var(--danger)':'var(--primary)') + ';">' + (summary.overall_usage_rate||0).toFixed(1) + '%</div><div class="stat-label">使用率</div></div><div class="stat-card"><div class="stat-num">' + (summary.unpaid_count||0) + '</div><div class="stat-label">未还账单</div></div></div></div>';
+    }
+    if (upcoming&&upcoming.bills&&upcoming.bills.length) {
+      h += '<div class="section-label">📅 ' + (upcoming.within_days||7) + '天内待还款</div>';
+      upcoming.bills.forEach(function(b){
+        var dd = new Date(b.due_date_this_month||b.due_date);
+        var days = Math.ceil((dd - new Date())/(86400000));
+        h += '<div class="card" style="border-left:4px solid ' + (days<=3?'var(--danger)':'var(--warning)') + ';"><div class="card-header" style="display:flex;justify-content:space-between;"><div class="card-title">' + esc(b.bank||'') + ' ' + esc(b.card_name||b.card_name_display||'') + '</div><div style="font-size:13px;color:' + (days<=3?'var(--danger)':'var(--text-secondary)') + ';">' + (days<=0?'今天到期':days+'天后') + '</div></div><div class="card-meta">应还: ¥' + (b.current_balance||0).toFixed(2) + ' · 账单日 ' + b.statement_date + '号 · 还款日 ' + b.due_date + '号</div></div>';
+      });
+    }
+    if (S.wallet.length) {
+      h += '<div class="section-label" style="margin-top:16px;">💳 录入帐单</div>';
+      h += '<div class="search-box"><select id="billCardSelect">' + S.wallet.map(function(c){ return '<option value="' + c.id + '">' + esc(c.card?c.card.bank:'') + ' ' + esc(c.card?c.card.name:c.nickname||'') + '</option>'; }).join('') + '</select></div>';
+      h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0;"><div><label style="font-size:12px;">本期金额 ¥</label><input id="billAmount" type="number" step="0.01" placeholder="0.00" style="width:100%;"></div><div><label style="font-size:12px;">额度 ¥</label><input id="billLimit" type="number" step="0.01" placeholder="从卡信息自动填"></div><div><label style="font-size:12px;">账单日</label><input id="billStmtDate" type="number" min="1" max="28" value="1"></div><div><label style="font-size:12px;">还款日</label><input id="billDueDate" type="number" min="1" max="31" value="25"></div></div><button class="btn-primary" onclick="addBill()">录入账单</button>';
+      h += '<div class="section-label" style="margin-top:16px;">💸 快捷记账</div>';
+      h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0;"><div><label style="font-size:12px;">金额 ¥</label><input id="expAmount" type="number" step="0.01" placeholder="0.00" style="width:100%;"></div><div><label style="font-size:12px;">分类</label><select id="expCategory"><option>餐饮</option><option>购物</option><option>出行</option><option>娱乐</option><option>生活</option><option>其他</option></select></div><div style="grid-column:1/3;"><label style="font-size:12px;">备注</label><input id="expDesc" placeholder="如：星巴克咖啡" style="width:100%;"></div></div><button class="btn-primary" style="margin-bottom:16px;" onclick="addExpense()">记账</button>';
+    } else {
+      h += '<div class="empty"><div class="empty-icon">👛</div>先在「卡包」里添加你的信用卡</div>';
+    }
+    el.innerHTML = h;
+  } catch(e) { el.innerHTML = retryCard('loadBills()'); }
+}
+
+async function addBill() {
+  var uci = document.getElementById('billCardSelect').value;
+  var data = {
+    user_card_id: uci,
+    current_balance: parseFloat(document.getElementById('billAmount').value)||null,
+    credit_limit: parseFloat(document.getElementById('billLimit').value)||null,
+    statement_date: parseInt(document.getElementById('billStmtDate').value)||1,
+    due_date: parseInt(document.getElementById('billDueDate').value)||25,
+  };
+  if (!data.current_balance) { toast('请输入本期金额', 'warning'); return; }
+  try {
+    await post('/bills', data);
+    loadBills();
+  } catch(e) { toast('录入失败', 'error'); }
+}
+
+async function addExpense() {
+  var uci = document.getElementById('billCardSelect').value;
+  var data = {
+    user_card_id: uci,
+    amount: parseFloat(document.getElementById('expAmount').value),
+    category: document.getElementById('expCategory').value,
+    description: document.getElementById('expDesc').value||null,
+  };
+  if (!data.amount||data.amount<=0) { toast('请输入有效金额', 'warning'); return; }
+  try {
+    await post('/expenses', data);
+    document.getElementById('expAmount').value = '';
+    document.getElementById('expDesc').value = '';
+    loadBills();
+  } catch(e) { toast('记账失败', 'error'); }
+}
+
+/* ======== Login / Signup ======== */
+function openLoginModal() {
+  if (S.loggedIn) { showAccountInfo(); return; }
+  var modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.innerHTML = '<div class="modal"><div class="modal-header"><div class="modal-title">👤 登录 / 注册</div><button class="modal-close" onclick="this.closest(\'.modal-overlay\').remove()">×</button></div><div id="login-content"><div style="margin-bottom:16px;"><button class="btn-primary" onclick="showSignup()" style="background:var(--primary);">注册新账号</button></div><div style="margin-bottom:16px;"><button class="btn-primary" onclick="showLogin()" style="background:#52c41a;">已有账号？登录</button></div><div style="text-align:center;font-size:12px;color:var(--text-secondary);">当前为匿名用户<br>数据绑定到本浏览器，注册后可跨设备同步</div></div></div>';
+  document.body.appendChild(modal);
+  modal.addEventListener('click', function(e) { if (e.target === modal) modal.remove(); });
+}
+
+function showSignup() {
+  document.getElementById('login-content').innerHTML = '<div class="form-group"><label>用户名 *（3-30位）</label><input id="signup-username" placeholder="字母/数字/中文" maxlength="30" /></div><div class="form-group"><label>密码 *（≥6位）</label><input id="signup-password" type="password" placeholder="至少6位" /></div><button class="btn-primary" onclick="doSignup()">注册并绑定</button><div style="text-align:center;margin-top:12px;"><a style="color:var(--primary);cursor:pointer;font-size:13px;" onclick="openLoginModal()">← 返回</a></div>';
+}
+
+function showLogin() {
+  document.getElementById('login-content').innerHTML = '<div class="form-group"><label>用户名</label><input id="login-username" placeholder="输入用户名" /></div><div class="form-group"><label>密码</label><input id="login-password" type="password" placeholder="输入密码" /></div><button class="btn-primary" onclick="doLogin()" style="background:#52c41a;">登录</button><div style="text-align:center;margin-top:12px;"><a style="color:var(--primary);cursor:pointer;font-size:13px;" onclick="openLoginModal()">← 返回</a></div>';
+}
+
+async function doSignup() {
+  var username = document.getElementById('signup-username').value.trim();
+  var password = document.getElementById('signup-password').value;
+  if (!username || !password) { toast('请填写用户名和密码', 'warning'); return; }
+  if (password.length < 6) { toast('密码至少6位', 'warning'); return; }
+  try {
+    var r = await fetch(API + '/user/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(S.token ? { 'Authorization': 'Bearer ' + S.token } : {}) },
+      body: JSON.stringify({ username: username, password: password })
+    });
+    if (!r.ok) { var e1 = await r.json(); throw Error(e1.detail || '注册失败'); }
+    var d = await r.json();
+    S.token = d.token;
+    S.userId = d.user_id;
+    S.loggedIn = true;
+    S.username = d.username || username;
+    localStorage.setItem('ccreward_token', S.token);
+    localStorage.setItem('ccreward_uid', S.userId);
+    localStorage.setItem('ccreward_username', S.username);
+    localStorage.setItem('ccreward_loggedIn', 'true');
+    updateHeaderUser();
+    var mo = document.querySelector('.modal-overlay');
+    if (mo) mo.remove();
+    await syncUserData();
+    render();
+  } catch (e) { toast('注册失败', 'error'); }
+}
+
+async function doLogin() {
+  var username = document.getElementById('login-username').value.trim();
+  var password = document.getElementById('login-password').value;
+  if (!username || !password) { toast('请填写用户名和密码', 'warning'); return; }
+  try {
+    var r = await fetch(API + '/user/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: username, password: password })
+    });
+    if (!r.ok) { var e2 = await r.json(); throw Error(e2.detail || '登录失败'); }
+    var d = await r.json();
+    S.token = d.token;
+    S.userId = d.user_id;
+    S.loggedIn = true;
+    S.username = d.username || username;
+    localStorage.setItem('ccreward_token', S.token);
+    localStorage.setItem('ccreward_uid', S.userId);
+    localStorage.setItem('ccreward_username', S.username);
+    localStorage.setItem('ccreward_loggedIn', 'true');
+    updateHeaderUser();
+    var mo2 = document.querySelector('.modal-overlay');
+    if (mo2) mo2.remove();
+    await syncUserData();
+    render();
+  } catch (e) { toast('登录失败', 'error'); }
+}
+
+function showAccountInfo() {
+  var modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.innerHTML = '<div class="modal"><div class="modal-header"><div class="modal-title">👤 账号信息</div><button class="modal-close" onclick="this.closest(\'.modal-overlay\').remove()">×</button></div><div class="card" style="text-align:center;"><div style="font-size:48px;margin-bottom:8px;">👤</div><div style="font-size:18px;font-weight:600;">' + esc(S.username || '已登录') + '</div></div><button class="btn-primary" onclick="doLogout()" style="background:var(--danger);">退出登录</button><div style="text-align:center;margin-top:12px;font-size:12px;color:var(--text-secondary);">退出后数据仍保留在浏览器</div></div>';
+  document.body.appendChild(modal);
+  modal.addEventListener('click', function(e) { if (e.target === modal) modal.remove(); });
+}
+
+}
+
+/* ======== TAB: 消费画像 ======== */
+var spendingState = { year: 0, month: 0 };
+
+function initSpendingMonth() {
+  var now = new Date();
+  spendingState.year = now.getFullYear();
+  spendingState.month = now.getMonth() + 1;
+}
+
+function prevSpendingMonth() {
+  if (spendingState.month === 1) { spendingState.year--; spendingState.month = 12; }
+  else { spendingState.month--; }
+  renderSpending(document.getElementById('main-panel'));
+}
+
+function nextSpendingMonth() {
+  if (spendingState.month === 12) { spendingState.year++; spendingState.month = 1; }
+  else { spendingState.month++; }
+  renderSpending(document.getElementById('main-panel'));
+}
+
+function spendingMonthLabel() {
+  return spendingState.year + '年' + spendingState.month + '月';
+}
+
+function spendingBarWidth(amount, max) {
+  if (!max || max <= 0) return '0%';
+  return Math.max(2, Math.round(amount / max * 100)) + '%';
+}
+
+function spendingUtilBarColor(rate) {
+  if (rate >= 80) return 'var(--danger)';
+  if (rate >= 50) return 'var(--warning)';
+  return 'var(--success)';
+}
+
+function renderSpending(panel) {
+  if (!spendingState.year) initSpendingMonth();
+  var today = new Date();
+  var isCurrentMonth = spendingState.year === today.getFullYear() && spendingState.month === (today.getMonth() + 1);
+  panel.innerHTML = '<div class="loading">⏳ 加载消费数据...</div>';
+
+  var y = spendingState.year, m = spendingState.month;
+  Promise.all([
+    get('/spending/summary?year=' + y + '&month=' + m, {silent: true}).catch(function() { return null; }),
+    get('/spending/trend?months=6', {silent: true}).catch(function() { return null; }),
+    get('/spending/merchants?year=' + y + '&month=' + m + '&limit=5', {silent: true}).catch(function() { return null; }),
+    get('/spending/credit-utilization', {silent: true}).catch(function() { return null; }),
+    get('/spending/cashback-estimate?year=' + y + '&month=' + m, {silent: true}).catch(function() { return null; }),
+  ]).then(function(results) {
+    var summary = results[0], trend = results[1], merchants = results[2], util = results[3], cashback = results[4];
+    var h = '';
+
+    // 月份切换
+    h += '<div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:16px;">';
+    h += '<button class="wallet-btn" style="color:var(--text);border-color:var(--border);padding:6px 14px;" onclick="prevSpendingMonth()">◀ 上月</button>';
+    h += '<span style="font-size:16px;font-weight:700;">' + spendingMonthLabel() + (isCurrentMonth ? ' (本月)' : '') + '</span>';
+    if (!isCurrentMonth) {
+      h += '<button class="wallet-btn" style="color:var(--text);border-color:var(--border);padding:6px 14px;" onclick="nextSpendingMonth()">下月 ▶</button>';
+    } else {
+      h += '<span style="width:80px;"></span>';
+    }
+    h += '</div>';
+
+    // 概览卡片
+    if (summary) {
+      var momArrow = summary.mom_change_pct >= 0 ? '↑' : '↓';
+      var momColor = summary.mom_change_pct >= 0 ? 'var(--danger)' : 'var(--success)';
+      h += '<div class="spending-cards">';
+      h += '<div class="spending-card"><div style="font-size:12px;color:var(--text-secondary);margin-bottom:4px;">总消费</div><div style="font-size:22px;font-weight:700;">¥' + summary.total.toFixed(2) + '</div><div style="font-size:11px;color:' + momColor + ';">' + momArrow + ' ' + Math.abs(summary.mom_change_pct || 0) + '%</div></div>';
+      h += '<div class="spending-card"><div style="font-size:12px;color:var(--text-secondary);margin-bottom:4px;">日均</div><div style="font-size:22px;font-weight:700;">¥' + summary.daily_avg.toFixed(0) + '</div><div style="font-size:11px;color:var(--text-secondary);">' + summary.tx_count + ' 笔交易</div></div>';
+      h += '<div class="spending-card"><div style="font-size:12px;color:var(--text-secondary);margin-bottom:4px;">最大单笔</div><div style="font-size:22px;font-weight:700;">¥' + summary.max_single.toFixed(0) + '</div><div style="font-size:11px;color:var(--text-secondary);">' + summary.category_count + ' 品类</div></div>';
+      h += '<div class="spending-card"><div style="font-size:12px;color:var(--text-secondary);margin-bottom:4px;">预估返现</div><div style="font-size:22px;font-weight:700;color:var(--success);">¥' + (cashback ? cashback.total_estimated_cashback.toFixed(2) : '0.00') + '</div><div style="font-size:11px;color:var(--text-secondary);">' + (cashback ? cashback.total_estimated_points.toFixed(0) : '0') + ' 积分</div></div>';
+      h += '</div>';
+
+      // 品类分布柱状图
+      if (summary.categories && summary.categories.length) {
+        var maxCat = summary.categories[0].amount;
+        h += '<div class="section-label">📊 品类分布</div>';
+        summary.categories.forEach(function(c) {
+          h += '<div class="spending-category-row"><div style="width:60px;font-size:13px;font-weight:500;">' + esc(c.category) + '</div><div style="flex:1;"><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-secondary);margin-bottom:4px;"><span>¥' + c.amount.toFixed(0) + '</span><span>' + (c.percent || 0) + '%</span></div><div style="background:var(--border);border-radius:4px;height:8px;"><div class="spending-bar" style="width:' + spendingBarWidth(c.amount, maxCat) + ';"></div></div></div></div>';
+        });
+      }
+    }
+
+    // 近 6 月趋势
+    if (trend && trend.length) {
+      var trendMax = Math.max.apply(null, trend.map(function(t) { return t.total; })) || 1;
+      h += '<div class="section-label">📈 近 6 月趋势</div>';
+      h += '<div style="display:flex;align-items:flex-end;gap:8px;height:120px;padding:8px 0;">';
+      trend.forEach(function(t) {
+        var isCurrent = t.year === y && t.month === m;
+        var barH = Math.max(4, Math.round(t.total / trendMax * 100));
+        h += '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;">';
+        h += '<div style="font-size:10px;color:var(--text-secondary);margin-bottom:4px;">¥' + (t.total || 0).toFixed(0) + '</div>';
+        h += '<div style="width:100%;height:' + barH + '%;background:' + (isCurrent ? 'var(--primary)' : 'var(--primary-light)') + ';border-radius:4px 4px 0 0;min-height:4px;"></div>';
+        h += '<div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">' + t.label + '</div></div>';
+      });
+      h += '</div>';
+    }
+
+    // Top 5 商户
+    if (merchants && merchants.length) {
+      h += '<div class="section-label">🏬 Top 商户</div>';
+      merchants.forEach(function(m, i) {
+        h += '<div class="spending-category-row"><div style="width:24px;font-size:14px;font-weight:700;color:var(--text-secondary);text-align:center;">' + (i + 1) + '</div><div style="width:100px;font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(m.merchant) + '</div><div style="flex:1;font-size:13px;text-align:right;font-weight:600;">¥' + m.total_amount.toFixed(2) + '</div><div style="width:40px;font-size:11px;color:var(--text-secondary);text-align:right;">' + m.count + '笔</div></div>';
+      });
+    }
+
+    // 额度使用率
+    if (util && util.length) {
+      h += '<div class="section-label">💳 额度使用率</div>';
+      util.forEach(function(u) {
+        var barColor = spendingUtilBarColor(u.usage_rate || 0);
+        h += '<div style="margin-bottom:10px;padding:8px 0;">';
+        h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">';
+        h += '<span style="font-size:13px;font-weight:500;">' + esc(u.bank) + ' ' + esc(u.card_name) + '</span>';
+        h += '<span style="font-size:13px;font-weight:600;color:' + barColor + ';">' + (u.usage_rate || 0).toFixed(1) + '%</span>';
+        h += '</div>';
+        h += '<div style="background:var(--border);border-radius:4px;height:8px;"><div class="spending-bar" style="width:' + Math.max(2, u.usage_rate || 0) + '%;background:' + barColor + ';"></div></div>';
+        h += '<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">已用 ¥' + (u.current_balance || 0).toFixed(0) + ' / 额度 ¥' + (u.credit_limit || 0).toFixed(0) + '</div>';
+        h += '</div>';
+      });
+    }
+
+    // 返现估算
+    if (cashback && cashback.cards && cashback.cards.length) {
+      h += '<div class="section-label">🎁 返现估算 (匹配的权益)</div>';
+      cashback.cards.forEach(function(c) {
+        if (!c.matched_benefits || !c.matched_benefits.length) return;
+        h += '<div class="card" style="border-left:4px solid var(--success);">';
+        h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">';
+        h += '<div style="font-weight:600;">' + esc(c.bank) + ' ' + esc(c.card_name) + '</div>';
+        h += '<div><span style="color:var(--success);font-weight:700;">¥' + (c.estimated_cashback || 0).toFixed(2) + '</span> <span style="color:var(--text-secondary);font-size:12px;">返现</span> + <span style="color:var(--primary);font-weight:700;">' + (c.estimated_points || 0).toFixed(0) + '</span> <span style="color:var(--text-secondary);font-size:12px;">积分</span></div>';
+        h += '</div>';
+        c.matched_benefits.forEach(function(b) {
+          h += '<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:12px;border-top:1px solid var(--border);">';
+          h += '<span>' + esc(b.benefit_title) + '</span>';
+          h += '<span style="color:var(--text-secondary);">' + esc(b.expense_category) + ' ¥' + (b.spending_amount || 0).toFixed(0) + ' → ' + esc(b.rate) + '</span>';
+          h += '</div>';
+        });
+        h += '</div>';
+      });
+    }
+
+    if (summary && summary.tx_count === 0) {
+      h += '<div class="empty"><div class="empty-icon">📭</div>本月暂无消费记录<br><small>去「我的卡包」→「记账」开始记录</small></div>';
+    }
+
+    panel.innerHTML = h;
+  }).catch(function() {
+    panel.innerHTML = retryCard('renderSpending(document.getElementById(\'main-panel\'))');
+  });
+}
+
+function doLogout() {
+  S.token = '';
+  S.userId = '';
+  S.loggedIn = false;
+  S.username = '';
+  localStorage.removeItem('ccreward_token');
+  localStorage.removeItem('ccreward_uid');
+  localStorage.removeItem('ccreward_username');
+  localStorage.removeItem('ccreward_loggedIn');
+  localStorage.removeItem('ccreward_wallet');
+  localStorage.removeItem('ccreward_bills_summary');
+  localStorage.removeItem('ccreward_bills_upcoming');
+  localStorage.removeItem('ccreward_reminders_expiring');
+  localStorage.removeItem('ccreward_reminders_fee');
+  S.wallet = [];
+  updateHeaderUser();
+  var mo3 = document.querySelector('.modal-overlay');
+  if (mo3) mo3.remove();
+  render();
+}
+
+function updateHeaderUser() {
+  var el = document.getElementById('hdr-user');
+  if (S.loggedIn && S.username) {
+    el.innerHTML = '👤 ' + esc(S.username);
+    el.title = '点击查看账号信息';
+  } else {
+    el.innerHTML = '👤 登录注册';
+    el.title = '点击登录或注册';
+  }
+  updateAdminTabVisibility();
+}
+
+function updateAdminTabVisibility() {
+  var tab = document.getElementById('tab-admin');
+  if (tab) tab.style.display = (S.loggedIn) ? '' : 'none';
+}
+
+/* ======== card image fallback ======== */
+var BANK_COLORS={'工商银行':'#e41e26,#c4121a','建设银行':'#005bac,#003d7a','农业银行':'#009b77,#007a5e','中国银行':'#b91a2e,#8b1220','招商银行':'#cc0000,#990000','交通银行':'#004b87,#00335c','中信银行':'#c41230,#900018','光大银行':'#7b2d8b,#5a1f65','华夏银行':'#c41230,#900018','民生银行':'#009b77,#007a5e','兴业银行':'#004b87,#00335c','浦发银行':'#004b87,#00335c','广发银行':'#c41230,#900018','平安银行':'#e7651d,#c05010','邮储银行':'#009444,#006630','上海银行':'#005bac,#003d7a','北京银行':'#e41e26,#c4121a','南京银行':'#009b77,#007a5e','广州银行':'#e7651d,#c05010','杭州银行':'#004b87,#00335c','成都银行':'#e41e26,#c4121a','深圳农商银行':'#009b77,#007a5e','苏州银行':'#005bac,#003d7a','江苏银行':'#005bac,#003d7a','宁波银行':'#004b87,#00335c','重庆银行':'#c41230,#900018'};
+function cardThumb(c) {
+  var b=c.bank||''; var colors=BANK_COLORS[b]||'#1677ff,#0958d9';
+  return '<div style="width:48px;height:32px;border-radius:4px;background:linear-gradient(135deg,'+colors+');display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;font-weight:700;flex-shrink:0;">'+esc(b.slice(0,2))+'</div>';
+}
+
+/* ======== TAB: 管理 ======== */
+var adminState = { subtab:'cards', page:1, size:15, stats:null };
+
+async function renderAdmin(panel) {
+  if (!S.loggedIn) {
+    panel.innerHTML = '<div class="empty"><div class="empty-icon">🔒</div>请先登录后使用管理功能<br><br><button class="btn-primary" onclick="openLoginModal()">🔑 登录 / 注册</button></div>';
+    return;
+  }
+  panel.innerHTML = '<div class="loading">⏳ 加载管理数据...</div>';
+  try {
+    adminState.stats = await get('/admin/stats');
+  } catch(e) {
+    panel.innerHTML = '<div class="empty"><div class="empty-icon">⚠️</div>加载失败，可能需要管理员权限</div>';
+    return;
+  }
+  var s = adminState.stats;
+  var crawlerHtml = (s.crawlers||[]).map(function(c){
+    var badge = c.last_status==='success' ? '<span class="admin-badge admin-badge-ok">成功</span>' : c.last_status==='partial' ? '<span class="admin-badge admin-badge-warn">部分</span>' : c.last_status==='failed' ? '<span class="admin-badge admin-badge-err">失败</span>' : '<span class="admin-badge admin-badge-gray">未知</span>';
+    return '<div class="admin-crawler-card"><div class="admin-crawler-info"><div class="admin-crawler-name">'+esc(c.crawler_name)+' ('+esc(c.platform)+')</div><div class="admin-crawler-meta">'+badge+' 最后运行: '+esc(c.last_run||'从未')+(' · 产出: ')+(c.last_saved||0)+'条 / 新增: '+(c.last_new||0)+'条</div></div><button class="admin-crawler-run" onclick="adminRunCrawler(\''+esc(c.crawler_name)+'\')">▶ 立即运行</button></div>';
+  }).join('') || '<div class="empty">暂无爬虫记录</div>';
+
+  var html = '<div class="admin-stats">'
+    + '<div class="admin-stat"><div class="stat-value">'+(s.cards||0)+'</div><div class="stat-label">📊 卡片总数</div></div>'
+    + '<div class="admin-stat"><div class="stat-value">'+(s.banks||0)+'</div><div class="stat-label">🏦 银行数</div></div>'
+    + '<div class="admin-stat"><div class="stat-value">'+(s.benefits||0)+'</div><div class="stat-label">🎫 权益数</div></div>'
+    + '<div class="admin-stat"><div class="stat-value">'+(s.activities||0)+'</div><div class="stat-label">📋 活动数</div></div>'
+    + '<div class="admin-stat"><div class="stat-value">'+(s.bank_offers||0)+'</div><div class="stat-label">🏦 银行优惠</div></div>'
+    + '</div>';
+
+  html += '<div class="admin-subtabs">';
+  ['cards','benefits','bank-offers','activities','crawlers'].forEach(function(t){
+    html += '<div class="admin-subtab '+(adminState.subtab===t?'active':'')+'" onclick="adminSubtab(\''+t+'\')">'+({cards:'💳 卡片',benefits:'🎫 权益','bank-offers':'🏦 银行优惠',activities:'📋 活动',crawlers:'🕷 爬虫'})[t]+'</div>';
+  });
+  html += '</div>';
+
+  html += '<div id="admin-content"></div>';
+  panel.innerHTML = html;
+  adminLoadSubtab();
+}
+
+function adminSubtab(t) {
+  adminState.subtab = t;
+  adminState.page = 1;
+  document.querySelectorAll('.admin-subtab').forEach(function(el){ el.classList.remove('active'); });
+  event.target.classList.add('active');
+  adminLoadSubtab();
+}
+
+async function adminLoadSubtab() {
+  var el = document.getElementById('admin-content');
+  if (!el) return;
+  if (adminState.subtab==='crawlers') {
+    adminRenderCrawlers(el);
+    return;
+  }
+  el.innerHTML = '<div class="loading">加载中...</div>';
+  try {
+    var endpoint = '/admin/' + adminState.subtab + '?page=' + adminState.page + '&size=' + adminState.size;
+    var data = await get(endpoint);
+    adminRenderTable(el, data);
+  } catch(e) {
+    el.innerHTML = retryCard('adminLoadSubtab()');
+  }
+}
+
+function adminRenderTable(el, data) {
+  var items = data.items || [];
+  var total = data.total || 0;
+  var sub = adminState.subtab;
+  var headers, fields, rowFn;
+
+  if (sub==='cards') {
+    headers = ['银行','卡名','网络','等级','年费','状态','操作'];
+    rowFn = function(c) {
+      return '<tr>'
+        +'<td>'+esc(c.bank)+'</td>'
+        +'<td>'+esc(c.name)+'</td>'
+        +'<td>'+esc(c.network)+'</td>'
+        +'<td>'+esc(c.level)+'</td>'
+        +'<td>'+esc(c.annual_fee||'')+'</td>'
+        +'<td>'+(c.is_active?'<span class="admin-badge admin-badge-ok">启用</span>':'<span class="admin-badge admin-badge-gray">停用</span>')+'</td>'
+        +'<td class="row-edit" onclick="adminEditCard(\''+esc(c.id)+'\')">✏️ 编辑</td>'
+        +'</tr>';
+    };
+  } else if (sub==='benefits') {
+    headers = ['银行','卡名','权益标题','类型','分类','状态','操作'];
+    rowFn = function(b) {
+      return '<tr>'
+        +'<td>'+esc(b.bank)+'</td>'
+        +'<td>'+esc(b.card_name)+'</td>'
+        +'<td>'+esc(b.title)+'</td>'
+        +'<td>'+esc(b.benefit_type)+'</td>'
+        +'<td>'+esc(b.category)+'</td>'
+        +'<td>'+(b.is_active?'<span class="admin-badge admin-badge-ok">启用</span>':'<span class="admin-badge admin-badge-gray">停用</span>')+'</td>'
+        +'<td class="row-edit" onclick="adminEditBenefit(\''+esc(b.id)+'\')">✏️ 编辑</td>'
+        +'</tr>';
+    };
+  } else if (sub==='bank-offers') {
+    headers = ['银行','标题','分类','状态','有效期','操作'];
+    rowFn = function(o) {
+      return '<tr>'
+        +'<td>'+esc(o.bank)+'</td>'
+        +'<td>'+esc(o.title)+'</td>'
+        +'<td>'+esc(o.category)+'</td>'
+        +'<td>'+esc(o.status)+'</td>'
+        +'<td>'+esc(o.valid_period||o.valid_to||'')+'</td>'
+        +'<td class="row-edit" onclick="adminEditOffer(\''+esc(o.id)+'\')">✏️ 编辑</td>'
+        +'</tr>';
+    };
+  } else if (sub==='activities') {
+    headers = ['标题','平台','商家','分类','价格','状态','操作'];
+    rowFn = function(a) {
+      return '<tr>'
+        +'<td>'+esc(a.title)+'</td>'
+        +'<td>'+esc(a.platform)+'</td>'
+        +'<td>'+esc(a.merchant_name)+'</td>'
+        +'<td>'+esc(a.category)+'</td>'
+        +'<td>'+(a.activity_price?'¥'+a.activity_price:'-')+'</td>'
+        +'<td>'+esc(a.status)+'</td>'
+        +'<td class="row-edit" onclick="adminEditActivity(\''+esc(a.id)+'\')">✏️ 编辑</td>'
+        +'</tr>';
+    };
+  }
+
+  var tableHtml = '<table class="admin-table"><thead><tr>' + headers.map(function(h){ return '<th>'+h+'</th>'; }).join('') + '</tr></thead><tbody>';
+  if (!items.length) {
+    tableHtml += '<tr><td colspan="'+headers.length+'" style="text-align:center;padding:20px;color:var(--text-secondary);">暂无数据</td></tr>';
+  } else {
+    tableHtml += items.map(rowFn).join('');
+  }
+  tableHtml += '</tbody></table>';
+
+  var totalPages = Math.ceil(total / adminState.size) || 1;
+  tableHtml += '<div class="admin-pager"><button onclick="adminPrev()" '+(adminState.page<=1?'disabled':'')+'>← 上一页</button><span class="page-info">'+adminState.page+'/'+totalPages+' 页 (共'+total+'条)</span><button onclick="adminNext()" '+(adminState.page>=totalPages?'disabled':'')+'>下一页 →</button></div>';
+
+  el.innerHTML = tableHtml;
+}
+
+function adminPrev() { if (adminState.page>1) { adminState.page--; adminLoadSubtab(); } }
+function adminNext() { adminState.page++; adminLoadSubtab(); }
+
+async function adminRenderCrawlers(el) {
+  try {
+    var crawlers = await get('/admin/crawlers');
+    if (!crawlers.length) { el.innerHTML = '<div class="empty">暂无爬虫记录</div>'; return; }
+    el.innerHTML = crawlers.map(function(c){
+      var badge = c.last_status==='success' ? '<span class="admin-badge admin-badge-ok">成功</span>' : c.last_status==='partial' ? '<span class="admin-badge admin-badge-warn">部分</span>' : c.last_status==='failed' ? '<span class="admin-badge admin-badge-err">失败</span>' : '<span class="admin-badge admin-badge-gray">未知</span>';
+      return '<div class="admin-crawler-card"><div class="admin-crawler-info"><div class="admin-crawler-name">'+esc(c.crawler_name)+' ('+esc(c.platform)+')</div><div class="admin-crawler-meta">'+badge+' 最后运行: '+esc(c.last_run||'从未')+' · 产出: '+(c.last_saved||0)+'条 / 新增: '+(c.last_new||0)+'条'+(c.last_error?' · 错误: '+esc(c.last_error):'')+'</div></div><button class="admin-crawler-run" onclick="adminRunCrawler(\''+esc(c.crawler_name)+'\')">▶ 立即运行</button></div>';
+    }).join('');
+  } catch(e) {
+    el.innerHTML = retryCard('adminRenderCrawlers(document.getElementById(\'admin-content\'))');
+  }
+}
+
+async function adminRunCrawler(name) {
+  toast('正在触发爬虫: '+name, 'info');
+  try {
+    var r = await post('/admin/crawlers/'+name+'/run');
+    if (r.success) {
+      toast(name+' 完成，抓取 '+r.saved+' 条', 'success');
+      adminRenderCrawlers(document.getElementById('admin-content'));
+    } else {
+      toast(name+' 失败: '+(r.error||''), 'error');
+    }
+  } catch(e) { toast('触发失败', 'error'); }
+}
+
+/* --- Admin Edit Modals --- */
+
+function adminEditCard(id) {
+  var modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.innerHTML = '<div class="modal"><div class="modal-header"><div class="modal-title">编辑卡片</div><button class="modal-close" onclick="this.closest(\'.modal-overlay\').remove()">×</button></div>'
+    + '<div class="form-group"><label>银行</label><input id="ae-bank" /></div>'
+    + '<div class="form-group"><label>卡名</label><input id="ae-name" /></div>'
+    + '<div class="form-group"><label>年费</label><input id="ae-fee" /></div>'
+    + '<div class="form-group"><label>描述</label><textarea id="ae-desc" rows="3"></textarea></div>'
+    + '<div class="form-group"><label>启用</label><select id="ae-active"><option value="true">是</option><option value="false">否</option></select></div>'
+    + '<button class="btn-primary" onclick="adminSaveCard(\''+id+'\')">保存</button></div>';
+  document.body.appendChild(modal);
+  modal.addEventListener('click', function(e){ if(e.target===modal) modal.remove(); });
+  get('/admin/cards?page=1&size=100').then(function(data){
+    var c = (data.items||[]).find(function(x){ return x.id===id; });
+    if (!c) return;
+    document.getElementById('ae-bank').value = c.bank||'';
+    document.getElementById('ae-name').value = c.name||'';
+    document.getElementById('ae-fee').value = c.annual_fee||'';
+    document.getElementById('ae-desc').value = c.description||'';
+    document.getElementById('ae-active').value = c.is_active?'true':'false';
+  });
+}
+
+async function adminSaveCard(id) {
+  var body = {
+    bank: val('ae-bank') || null,
+    name: val('ae-name') || null,
+    annual_fee: val('ae-fee') || null,
+    description: val('ae-desc') || null,
+    is_active: val('ae-active')==='true',
+  };
+  try {
+    await patch('/admin/cards/'+id, body);
+    document.querySelector('.modal-overlay').remove();
+    toast('保存成功', 'success');
+    adminLoadSubtab();
+  } catch(e) { toast('保存失败', 'error'); }
+}
+
+function adminEditBenefit(id) {
+  var modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.innerHTML = '<div class="modal"><div class="modal-header"><div class="modal-title">编辑权益</div><button class="modal-close" onclick="this.closest(\'.modal-overlay\').remove()">×</button></div>'
+    + '<div class="form-group"><label>标题</label><input id="ae-title" /></div>'
+    + '<div class="form-group"><label>描述</label><textarea id="ae-desc" rows="3"></textarea></div>'
+    + '<div class="form-group"><label>值</label><input id="ae-value" /></div>'
+    + '<div class="form-group"><label>使用限制</label><input id="ae-limit" /></div>'
+    + '<div class="form-group"><label>启用</label><select id="ae-active"><option value="true">是</option><option value="false">否</option></select></div>'
+    + '<button class="btn-primary" onclick="adminSaveBenefit(\''+id+'\')">保存</button></div>';
+  document.body.appendChild(modal);
+  modal.addEventListener('click', function(e){ if(e.target===modal) modal.remove(); });
+  get('/admin/benefits?page=1&size=100').then(function(data){
+    var b = (data.items||[]).find(function(x){ return x.id===id; });
+    if (!b) return;
+    document.getElementById('ae-title').value = b.title||'';
+    document.getElementById('ae-desc').value = b.description||'';
+    document.getElementById('ae-value').value = b.value_text||'';
+    document.getElementById('ae-limit').value = b.usage_limit||'';
+    document.getElementById('ae-active').value = b.is_active?'true':'false';
+  });
+}
+
+async function adminSaveBenefit(id) {
+  var body = {
+    title: val('ae-title') || null,
+    description: val('ae-desc') || null,
+    value_text: val('ae-value') || null,
+    usage_limit: val('ae-limit') || null,
+    is_active: val('ae-active')==='true',
+  };
+  try {
+    await patch('/admin/benefits/'+id, body);
+    document.querySelector('.modal-overlay').remove();
+    toast('保存成功', 'success');
+    adminLoadSubtab();
+  } catch(e) { toast('保存失败', 'error'); }
+}
+
+function adminEditOffer(id) {
+  var modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.innerHTML = '<div class="modal"><div class="modal-header"><div class="modal-title">编辑银行优惠</div><button class="modal-close" onclick="this.closest(\'.modal-overlay\').remove()">×</button></div>'
+    + '<div class="form-group"><label>标题</label><input id="ae-title" /></div>'
+    + '<div class="form-group"><label>描述</label><textarea id="ae-desc" rows="3"></textarea></div>'
+    + '<div class="form-group"><label>优惠亮点</label><input id="ae-highlight" /></div>'
+    + '<div class="form-group"><label>有效期</label><input id="ae-period" /></div>'
+    + '<div class="form-group"><label>状态</label><select id="ae-status"><option value="进行中">进行中</option><option value="常态活动">常态活动</option><option value="已过期">已过期</option></select></div>'
+    + '<div class="form-group"><label>启用</label><select id="ae-active"><option value="true">是</option><option value="false">否</option></select></div>'
+    + '<button class="btn-primary" onclick="adminSaveOffer(\''+id+'\')">保存</button></div>';
+  document.body.appendChild(modal);
+  modal.addEventListener('click', function(e){ if(e.target===modal) modal.remove(); });
+  get('/admin/bank-offers?page=1&size=100').then(function(data){
+    var o = (data.items||[]).find(function(x){ return x.id===id; });
+    if (!o) return;
+    document.getElementById('ae-title').value = o.title||'';
+    document.getElementById('ae-desc').value = o.description||'';
+    document.getElementById('ae-highlight').value = o.discount_highlight||'';
+    document.getElementById('ae-period').value = o.valid_period||'';
+    document.getElementById('ae-status').value = o.status||'进行中';
+    document.getElementById('ae-active').value = o.is_active?'true':'false';
+  });
+}
+
+async function adminSaveOffer(id) {
+  var body = {
+    title: val('ae-title') || null,
+    description: val('ae-desc') || null,
+    discount_highlight: val('ae-highlight') || null,
+    valid_period: val('ae-period') || null,
+    status: val('ae-status') || null,
+    is_active: val('ae-active')==='true',
+  };
+  try {
+    await patch('/admin/bank-offers/'+id, body);
+    document.querySelector('.modal-overlay').remove();
+    toast('保存成功', 'success');
+    adminLoadSubtab();
+  } catch(e) { toast('保存失败', 'error'); }
+}
+
+function adminEditActivity(id) {
+  var modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.innerHTML = '<div class="modal"><div class="modal-header"><div class="modal-title">编辑活动</div><button class="modal-close" onclick="this.closest(\'.modal-overlay\').remove()">×</button></div>'
+    + '<div class="form-group"><label>标题</label><input id="ae-title" /></div>'
+    + '<div class="form-group"><label>优惠描述</label><textarea id="ae-desc" rows="3"></textarea></div>'
+    + '<div class="form-group"><label>活动价格</label><input id="ae-price" type="number" step="0.01" /></div>'
+    + '<div class="form-group"><label>使用条件</label><input id="ae-conds" /></div>'
+    + '<div class="form-group"><label>状态</label><select id="ae-status"><option value="进行中">进行中</option><option value="已过期">已过期</option><option value="未开始">未开始</option></select></div>'
+    + '<div class="form-group"><label>启用</label><select id="ae-active"><option value="true">是</option><option value="false">否</option></select></div>'
+    + '<button class="btn-primary" onclick="adminSaveActivity(\''+id+'\')">保存</button></div>';
+  document.body.appendChild(modal);
+  modal.addEventListener('click', function(e){ if(e.target===modal) modal.remove(); });
+  get('/admin/activities?page=1&size=100').then(function(data){
+    var a = (data.items||[]).find(function(x){ return x.id===id; });
+    if (!a) return;
+    document.getElementById('ae-title').value = a.title||'';
+    document.getElementById('ae-desc').value = a.discount_description||'';
+    document.getElementById('ae-price').value = a.activity_price||'';
+    document.getElementById('ae-conds').value = a.usage_conditions||'';
+    document.getElementById('ae-status').value = a.status||'进行中';
+    document.getElementById('ae-active').value = a.is_active?'true':'false';
+  });
+}
+
+async function adminSaveActivity(id) {
+  var body = {
+    title: val('ae-title') || null,
+    discount_description: val('ae-desc') || null,
+    activity_price: parseFloat(val('ae-price')) || null,
+    usage_conditions: val('ae-conds') || null,
+    status: val('ae-status') || null,
+    is_active: val('ae-active')==='true',
+  };
+  try {
+    await patch('/admin/activities/'+id, body);
+    document.querySelector('.modal-overlay').remove();
+    toast('保存成功', 'success');
+    adminLoadSubtab();
+  } catch(e) { toast('保存失败', 'error'); }
+}
